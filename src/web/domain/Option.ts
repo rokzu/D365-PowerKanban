@@ -37,3 +37,9 @@ export interface Option {
     Label: Label;
     Description: Description;
 }
+
+export interface Attribute {
+    OptionSet: {
+        Options: Array<Option>
+    };
+}

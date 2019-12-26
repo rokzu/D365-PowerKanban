@@ -6,7 +6,7 @@ module.exports = {
     entry: "./components/index.tsx",
 
     output: {
-        filename: "d365_incidentManager.bundle.js",
+        filename: "d365BoardView.bundle.js",
         path: path.resolve("dist", "bundle"),
         publicPath: "",
     },
@@ -51,6 +51,6 @@ module.exports = {
     externals: {
         "react": "React",
         "react-dom": "ReactDOM"
-    },
+    }
 };
 
