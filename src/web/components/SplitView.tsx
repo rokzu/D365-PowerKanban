@@ -1,20 +1,20 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Row, Col } from "react-bootstrap";
-import { useAppState } from "../domain/AppState";
+import { useAppContext } from "../domain/AppState";
 import { Board } from "./Board";
 import { SideBySideForm } from "./SideBySideForm";
 
 interface SplitViewProps { }
 
 export const SplitView = (props: SplitViewProps) => {
-    const appState = useAppState();
+    const [appState, appDispatch] = useAppContext();
 
     return (
         <Row>
-            <Col xs={appState.secondaryVisible ? 9 : 12}>
-            <Board />
+            <Col xs={!!appState.selectedRecord ? 9 : 12}>
+            <Board appState={appState} appDispatch={appDispatch} />
             </Col>
-            { appState.secondaryVisible &&
+            { !!appState.selectedRecord &&
             <Col xs={3}>
                 <SideBySideForm />
             </Col>

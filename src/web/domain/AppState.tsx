@@ -4,20 +4,19 @@ import { ParseSearch } from "./ParseSearch";
 type Action = { type: "setAppId", payload: string }
     | { type: "setSelectedRecord", payload: Xrm.LookupValue };
 
-type AppState = {
+export type Dispatch = (action: Action) => void;
+
+export type AppStateProps = {
     appId?: string;
     configId?: string;
     selectedRecord?: { entityType: string, id: string, name?: string };
-    secondaryVisible?: boolean;
-    setSecondaryVisible?: (visible: boolean) => void;
-    dispatch?: (action: Action) => void;
 };
 
 type AppContextProps = {
     children: React.ReactNode;
 };
 
-function stateReducer(state: AppState, action: Action): AppState {
+function stateReducer(state: AppStateProps, action: Action): AppStateProps {
     switch (action.type) {
         case "setAppId": {
             return { appId: action.payload };
@@ -28,7 +27,8 @@ function stateReducer(state: AppState, action: Action): AppState {
     }
 }
 
-export const AppState = React.createContext<AppState | undefined>(undefined);
+export const AppState = React.createContext<AppStateProps | undefined>(undefined);
+export const AppDispatch = React.createContext<Dispatch | undefined>(undefined);
 
 export function AppStateProvider({ children }: AppContextProps) {
     const search = ParseSearch();
@@ -43,7 +43,9 @@ export function AppStateProvider({ children }: AppContextProps) {
 
     return (
         <AppState.Provider value={state}>
-            {children}
+            <AppDispatch.Provider value={dispatch}>
+                {children}
+            </AppDispatch.Provider>
         </AppState.Provider>
     );
 }
@@ -52,8 +54,22 @@ export function useAppState() {
     const context = useContext(AppState);
 
     if (!context) {
-        throw new Error("Use App State must be used within a state provider!");
+        throw new Error("useAppState must be used within a state provider!");
     }
 
     return context;
+}
+
+export function useAppDispatch() {
+    const context = useContext(AppDispatch);
+
+    if (!context) {
+        throw new Error("useAppDispatch must be used within a state provider!");
+    }
+
+    return context;
+}
+
+export function useAppContext(): [ AppStateProps, Dispatch ] {
+    return [ useAppState(), useAppDispatch() ];
 }

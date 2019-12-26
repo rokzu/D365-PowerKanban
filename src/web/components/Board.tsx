@@ -4,7 +4,12 @@ import WebApiClient from "xrm-webapi-client";
 import { Option, Attribute } from "../domain/Option";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
 import UserInputModal from "./UserInputModalProps";
-import { AppState } from "../domain/AppState";
+import { AppStateProps, Dispatch } from "../domain/AppState";
+
+interface BoardProps {
+  appState: AppStateProps;
+  appDispatch: Dispatch;
+}
 
 interface BoardState {
   selectedRecord?: Xrm.LookupValue;
@@ -14,14 +19,12 @@ interface BoardState {
   swimLaneField?: Attribute;
 }
 
-export class Board extends React.PureComponent<any, BoardState> {
-    constructor(props: any) {
+export class Board extends React.PureComponent<BoardProps, BoardState> {
+    constructor(props: BoardProps) {
         super(props);
 
         this.state = { };
     }
-
-    static contextType = AppState;
 
     fetchSwimLaneField = async (entity: string) => {
       const response = await WebApiClient.Retrieve({entityName: "EntityDefinition", queryParams: `(LogicalName='${entity}')/Attributes/Microsoft.Dynamics.CRM.StatusAttributeMetadata?$expand=OptionSet`});
@@ -41,7 +44,7 @@ export class Board extends React.PureComponent<any, BoardState> {
     };
 
     async componentDidMount() {
-      const appState = this.context;
+      const appState = this.props.appState;
 
       const config = await this.fetchConfig(appState.configId);
       const swimLaneField = await this.fetchSwimLaneField(config.entityName);
@@ -109,7 +112,7 @@ export class Board extends React.PureComponent<any, BoardState> {
             </Navbar>
             <Card>
               <Row>
-                { this.state.boardData && Object.keys(this.state.boardData).map(laneId => <Col xs={1}><Card>{this.state.boardData[laneId].map(d => <Card>{d.createdon}</Card>)}</Card></Col>)}
+                { this.state.boardData && Object.keys(this.state.boardData).map(laneId => <Col xs={1}><Card key={`lane_${laneId}`} title={laneId}>{this.state.boardData[laneId].map(d => <Card key={d[`${this.state.config.entityName}id`]} onClick={() => this.props.appDispatch({ type: "setSelectedRecord", payload: { entityType: this.state.config.entityName, id: d[`${this.state.config.entityName}id`] } })}>{d.createdon}</Card>)}</Card></Col>)}
               </Row>
             </Card>
           </div>
