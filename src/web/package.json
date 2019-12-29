@@ -6,7 +6,8 @@
   "scripts": {
     "tslint": "tslint --fix -c tslint.json -p tsconfig.json",
     "prebuild": "npm run tslint",
-    "build": "webpack"
+    "build": "webpack",
+    "watchBuild": "webpack -w"
   },
   "author": "",
   "license": "",

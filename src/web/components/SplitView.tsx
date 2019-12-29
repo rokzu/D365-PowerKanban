@@ -10,15 +10,15 @@ export const SplitView = (props: SplitViewProps) => {
     const [appState, appDispatch] = useAppContext();
 
     return (
-        <Row>
-            <Col xs={!!appState.selectedRecord ? 9 : 12}>
-            <Board appState={appState} appDispatch={appDispatch} />
-            </Col>
+        <div style={{display: "flex", width: "100%", height: "100%"}}>
+            <div style={appState.selectedRecord ? { minWidth: "600px", resize: "horizontal", overflow: "auto"} : { width: "100%" }}>
+                <Board />
+            </div>
             { !!appState.selectedRecord &&
-            <Col xs={3}>
+            <div style={{minWidth: "400px", borderLeft: "1px solid", flex: 1 }}>
                 <SideBySideForm />
-            </Col>
+            </div>
             }
-        </Row>
+        </div>
     );
 };

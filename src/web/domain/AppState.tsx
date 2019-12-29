@@ -1,15 +1,21 @@
 import React, { useContext } from "react";
 import { ParseSearch } from "./ParseSearch";
+import { BoardViewConfig } from "./BoardViewConfig";
 
 type Action = { type: "setAppId", payload: string }
-    | { type: "setSelectedRecord", payload: Xrm.LookupValue };
+    | { type: "setConfigId", payload: string }
+    | { type: "setConfig", payload: BoardViewConfig }
+    | { type: "setSelectedRecord", payload: Xrm.LookupValue }
+    | { type: "setBoardData", payload: { [key: string]: Array<any> } };
 
 export type Dispatch = (action: Action) => void;
 
 export type AppStateProps = {
     appId?: string;
     configId?: string;
+    config?: BoardViewConfig;
     selectedRecord?: { entityType: string, id: string, name?: string };
+    boardData?: { [key: string]: Array<any> };
 };
 
 type AppContextProps = {
@@ -19,10 +25,19 @@ type AppContextProps = {
 function stateReducer(state: AppStateProps, action: Action): AppStateProps {
     switch (action.type) {
         case "setAppId": {
-            return { appId: action.payload };
+            return { ...state, appId: action.payload };
+        }
+        case "setConfigId": {
+            return { ...state, configId: action.payload };
         }
         case "setSelectedRecord": {
-            return { selectedRecord: action.payload };
+            return { ...state, selectedRecord: action.payload };
+        }
+        case "setBoardData": {
+            return { ...state, boardData: action.payload };
+        }
+        case "setConfig": {
+            return { ...state, config: action.payload };
         }
     }
 }
@@ -34,11 +49,9 @@ export function AppStateProvider({ children }: AppContextProps) {
     const search = ParseSearch();
 
     const appId = search["appid"];
-    const configId = search["data"];
 
     const [state, dispatch] = React.useReducer(stateReducer, {
-        appId,
-        configId
+        appId
     });
 
     return (
