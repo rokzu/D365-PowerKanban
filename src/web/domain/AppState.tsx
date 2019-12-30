@@ -3,6 +3,7 @@ import { ParseSearch } from "./ParseSearch";
 import { BoardViewConfig } from "./BoardViewConfig";
 import { Metadata, Attribute } from "../domain/Metadata";
 import { BoardLane } from "./BoardLane";
+import { SavedQuery } from "./SavedQuery";
 
 type Action = { type: "setAppId", payload: string }
     | { type: "setConfigId", payload: string }
@@ -10,7 +11,8 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setSelectedRecord", payload: Xrm.LookupValue }
     | { type: "setBoardData", payload: Array<BoardLane> }
     | { type: "setMetadata", payload: Metadata }
-    | { type: "setSeparatorMetadata", payload: Attribute };
+    | { type: "setSeparatorMetadata", payload: Attribute }
+    | { type: "setSelectedView", payload: SavedQuery };
 
 export type Dispatch = (action: Action) => void;
 
@@ -19,6 +21,8 @@ export type AppStateProps = {
     configId?: string;
     config?: BoardViewConfig;
     metadata?: Metadata;
+    selectedView?: SavedQuery;
+    selectedViewData?: { columns: Array<string>; linkEntities: Array<{ entityName: string, alias: string }> }
     separatorMetadata?: Attribute;
     selectedRecord?: { entityType: string, id: string, name?: string };
     boardData?: Array<BoardLane>;
@@ -26,6 +30,18 @@ export type AppStateProps = {
 
 type AppContextProps = {
     children: React.ReactNode;
+};
+
+const parseLayoutColumns = (layoutXml: string): Array<string> => {
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(layoutXml, "application/xml");
+    return Array.from(xml.documentElement.getElementsByTagName("cell")).map(c => c.getAttribute("name"));
+};
+
+const parseLinksFromFetch = (fetchXml: string): Array<{ entityName: string, alias: string }> => {
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(fetchXml, "application/xml");
+    return Array.from(xml.documentElement.getElementsByTagName("link-entity")).map(c => ({ entityName: c.getAttribute("name"), alias: c.getAttribute("alias")}));
 };
 
 function stateReducer(state: AppStateProps, action: Action): AppStateProps {
@@ -50,6 +66,9 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         }
         case "setSeparatorMetadata": {
             return { ...state, separatorMetadata: action.payload };
+        }
+        case "setSelectedView": {
+            return { ...state, selectedView: action.payload, selectedViewData: { columns: parseLayoutColumns(action.payload.layoutxml), linkEntities: parseLinksFromFetch(action.payload.fetchxml) } };
         }
     }
 }

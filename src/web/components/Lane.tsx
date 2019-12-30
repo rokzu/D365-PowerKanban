@@ -12,7 +12,7 @@ export const Lane = (props: LaneProps) => {
     const [ appState, appDispatch ] = useAppContext();
 
     return (
-        <div style={{ minWidth: "100px", margin: "5px", flex: "1 1 0" }}>
+        <div style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}>
             <Card>
                 <Card.Body>
                     <Card.Title>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>

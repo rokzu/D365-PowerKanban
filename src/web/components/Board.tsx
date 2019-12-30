@@ -50,9 +50,14 @@ const fetchConfig = async (configId: string): Promise<BoardViewConfig> => {
   return JSON.parse(atob(config.content));
 };
 
-const fetchData = async (config: BoardViewConfig, attribute: Attribute) => {
+const fetchData = async (fetchXml: string, config: BoardViewConfig, attribute: Attribute) => {
+  // We make sure that the swim lane source is always included without having to update all views
+  const failsafeFetch = fetchXml.includes(`<attribute name=\"${config.swimLaneSource}\" />`)
+    ? fetchXml
+    : fetchXml.replace(`<entity name=\"${config.entityName}\">`, `<entity name=\"${config.entityName}\"><attribute name=\"${config.swimLaneSource}\" />`);
+
   const lanes = attribute.AttributeType === "Boolean" ? [ attribute.OptionSet.FalseOption, attribute.OptionSet.TrueOption ] : attribute.OptionSet.Options.sort((a, b) => a.State - b.State);
-  const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: config.entityName });
+  const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: config.entityName, fetchXml: failsafeFetch, returnAllPages: true, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
 
   return data.reduce((all: Array<BoardLane>, record) => {
     const laneSource = record[config.swimLaneSource];
@@ -106,7 +111,6 @@ const fetchData = async (config: BoardViewConfig, attribute: Attribute) => {
 export const Board = () => {
   const [ appState, appDispatch ] = useAppContext();
   const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
-  const [ selectedView, setSelectedView ]: [ SavedQuery, (view: SavedQuery) => void ] = useState();
   const [ showDeletionVerification, setShowDeletionVerification ] = useState(false);
 
   useEffect(() => {
@@ -124,9 +128,11 @@ export const Board = () => {
 
       const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
       setViews(views);
-      setSelectedView(views[0]);
 
-      const data = await fetchData(config, attributeMetadata);
+      const defaultView = views[0];
+      appDispatch({ type: "setSelectedView", payload: defaultView });
+
+      const data = await fetchData(defaultView.fetchxml, config, attributeMetadata);
       appDispatch({ type: "setBoardData", payload: data });
     }
 
@@ -140,8 +146,8 @@ export const Board = () => {
 
   };
 
-  const refresh = async () => {
-    const data = await fetchData(appState.config, appState.separatorMetadata);
+  const refresh = async (fetchXml?: string) => {
+    const data = await fetchData(fetchXml ?? appState.selectedView.fetchxml, appState.config, appState.separatorMetadata);
     appDispatch({ type: "setBoardData", payload: data });
   };
 
@@ -152,9 +158,10 @@ export const Board = () => {
 
   const setView = (event: any) => {
     const viewId = event.target.id;
+    const view = views.find(v => v.savedqueryid === viewId);
 
-    setSelectedView(views.find(v => v.savedqueryid === viewId));
-    refresh();
+    appDispatch({ type: "setSelectedView", payload: view });
+    refresh(view.fetchxml);
   };
 
   return (
@@ -165,13 +172,13 @@ export const Board = () => {
       <Navbar bg="light" variant="light" fixed="top">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
-            <DropdownButton id="viewSelector" title={selectedView?.name ?? "Select view"}>
+            <DropdownButton id="viewSelector" title={appState.selectedView?.name ?? "Select view"}>
               { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
             </DropdownButton>
           </Nav>
           <Nav className="pull-right">
             { appState.config && appState.config.showCreateButton && <Button onClick={newRecord}>Create New</Button> }
-            <Button style={{marginLeft: "5px"}} onClick={refresh}>Refresh</Button>
+            <Button style={{marginLeft: "5px"}} onClick={refresh as any}>Refresh</Button>
           </Nav>
         </Navbar.Collapse>
       </Navbar>
