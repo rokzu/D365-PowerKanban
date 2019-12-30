@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Navbar, Nav, Button, Card, Col, Row } from "react-bootstrap";
+import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown } from "react-bootstrap";
 import WebApiClient from "xrm-webapi-client";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
 import UserInputModal from "./UserInputModalProps";
@@ -8,6 +8,7 @@ import { formatGuid } from "../domain/GuidFormatter";
 import { Lane } from "./Lane";
 import { Metadata, Attribute, Option } from "../domain/Metadata";
 import { BoardLane } from "../domain/BoardLane";
+import { SavedQuery } from "../domain/SavedQuery";
 
 const determineAttributeUrl = (attribute: Attribute) => {
   if (attribute.AttributeType === "Picklist") {
@@ -104,6 +105,8 @@ const fetchData = async (config: BoardViewConfig, attribute: Attribute) => {
 
 export const Board = () => {
   const [ appState, appDispatch ] = useAppContext();
+  const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
+  const [ selectedView, setSelectedView ]: [ SavedQuery, (view: SavedQuery) => void ] = useState();
   const [ showDeletionVerification, setShowDeletionVerification ] = useState(false);
 
   useEffect(() => {
@@ -118,6 +121,10 @@ export const Board = () => {
       appDispatch({ type: "setConfig", payload: config });
       appDispatch({ type: "setMetadata", payload: metadata });
       appDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
+
+      const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
+      setViews(views);
+      setSelectedView(views[0]);
 
       const data = await fetchData(config, attributeMetadata);
       appDispatch({ type: "setBoardData", payload: data });
@@ -143,19 +150,32 @@ export const Board = () => {
     refresh();
   };
 
+  const setView = (event: any) => {
+    const viewId = event.target.id;
+
+    setSelectedView(views.find(v => v.savedqueryid === viewId));
+    refresh();
+  };
+
   return (
     <div style={{height: "100%"}}>
       <UserInputModal title="Verify Deletion" yesCallBack={deleteRecord} finally={hideDeletionVerification} show={showDeletionVerification}>
         <div>Are you sure you want to delete  '{appState.selectedRecord && appState.selectedRecord.name}' (ID: {appState.selectedRecord && appState.selectedRecord.id})?</div>
       </UserInputModal>
-      <Navbar bg="light" variant="light">
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="mr-auto"></Nav>
-          { appState.config && appState.config.showCreateButton && <Button onClick={newRecord}>Create New</Button> }
-          <Button style={{marginLeft: "5px"}} onClick={refresh}>Refresh</Button>
+      <Navbar bg="light" variant="light" fixed="top">
+        <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
+          <Nav className="pull-left">
+            <DropdownButton id="viewSelector" title={selectedView?.name ?? "Select view"}>
+              { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
+            </DropdownButton>
+          </Nav>
+          <Nav className="pull-right">
+            { appState.config && appState.config.showCreateButton && <Button onClick={newRecord}>Create New</Button> }
+            <Button style={{marginLeft: "5px"}} onClick={refresh}>Refresh</Button>
+          </Nav>
         </Navbar.Collapse>
       </Navbar>
-      <Card>
+      <Card style={{marginTop: "54px"}}>
         <div id="flexContainer" style={{ display: "flex", margin: "5px", flexDirection: "row" }}>
           { appState.boardData && appState.boardData.map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} lane={d} />)}
         </div>
