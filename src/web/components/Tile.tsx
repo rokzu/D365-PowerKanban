@@ -14,7 +14,7 @@ export const Tile = (props: TileProps) => {
     };
 
     return (
-        <Card onClick={setSelectedRecord}>
+        <Card onClick={setSelectedRecord} style={{marginBottom: "5px"}}>
             <Card.Body>
                 {props.data.createdon}
             </Card.Body>

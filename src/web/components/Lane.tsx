@@ -16,7 +16,7 @@ export const Lane = (props: LaneProps) => {
             <Card>
                 <Card.Body>
                     <Card.Title>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
-                    {props.lane.data.map(d => <Tile key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} data={d} />)}
+                    { props.lane.data.map(d => <Tile key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} data={d} />) }
                 </Card.Body>
             </Card>
         </div>

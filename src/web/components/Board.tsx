@@ -50,7 +50,7 @@ const fetchConfig = async (configId: string): Promise<BoardViewConfig> => {
 };
 
 const fetchData = async (config: BoardViewConfig, attribute: Attribute) => {
-  const lanes = attribute.AttributeType === "Boolean" ? [ attribute.OptionSet.FalseOption, attribute.OptionSet.TrueOption ] : attribute.OptionSet.Options;
+  const lanes = attribute.AttributeType === "Boolean" ? [ attribute.OptionSet.FalseOption, attribute.OptionSet.TrueOption ] : attribute.OptionSet.Options.sort((a, b) => a.State - b.State);
   const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: config.entityName });
 
   return data.reduce((all: Array<BoardLane>, record) => {
@@ -138,6 +138,11 @@ export const Board = () => {
     appDispatch({ type: "setBoardData", payload: data });
   };
 
+  const newRecord = async () => {
+    await Xrm.Navigation.openForm({ entityName: appState.config.entityName, useQuickCreateForm: true }, undefined);
+    refresh();
+  };
+
   return (
     <div style={{height: "100%"}}>
       <UserInputModal title="Verify Deletion" yesCallBack={deleteRecord} finally={hideDeletionVerification} show={showDeletionVerification}>
@@ -146,8 +151,8 @@ export const Board = () => {
       <Navbar bg="light" variant="light">
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mr-auto"></Nav>
-          { appState.config && appState.config.showCreateButton && <Button>Create New</Button> }
-          <Button onClick={refresh}>Refresh</Button>
+          { appState.config && appState.config.showCreateButton && <Button onClick={newRecord}>Create New</Button> }
+          <Button style={{marginLeft: "5px"}} onClick={refresh}>Refresh</Button>
         </Navbar.Collapse>
       </Navbar>
       <Card>
