@@ -15,7 +15,7 @@ export const SplitView = (props: SplitViewProps) => {
                 <Board />
             </div>
             { !!appState.selectedRecord &&
-            <div style={{minWidth: "400px", borderLeft: "1px solid", flex: 1 }}>
+            <div style={{minWidth: "400px", borderLeft: "1px solid", flex: "1 1 0" }}>
                 <SideBySideForm />
             </div>
             }

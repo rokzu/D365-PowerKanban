@@ -1,22 +1,46 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Navbar, Nav, Button, Card, Col, Row } from "react-bootstrap";
 import WebApiClient from "xrm-webapi-client";
-import { Option, Attribute } from "../domain/Option";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
 import UserInputModal from "./UserInputModalProps";
 import { AppStateProps, Dispatch, useAppContext } from "../domain/AppState";
 import { formatGuid } from "../domain/GuidFormatter";
 import { Lane } from "./Lane";
+import { Metadata, Attribute, Option } from "../domain/Metadata";
+import { BoardLane } from "../domain/BoardLane";
 
-const fetchSwimLaneField = async (entity: string) => {
-  const response = await WebApiClient.Retrieve({entityName: "EntityDefinition", queryParams: `(LogicalName='${entity}')/Attributes/Microsoft.Dynamics.CRM.StatusAttributeMetadata?$expand=OptionSet`});
-  const value = response.value as Array<any>;
-
-  if (!value || !value.length) {
-    return undefined;
+const determineAttributeUrl = (attribute: Attribute) => {
+  if (attribute.AttributeType === "Picklist") {
+    return "Microsoft.Dynamics.CRM.PicklistAttributeMetadata";
   }
 
-  return value[0];
+  if (attribute.AttributeType === "Status") {
+    return "Microsoft.Dynamics.CRM.StatusAttributeMetadata";
+  }
+
+  if (attribute.AttributeType === "State") {
+    return "Microsoft.Dynamics.CRM.StateAttributeMetadata";
+  }
+
+  if (attribute.AttributeType === "Boolean") {
+    return "Microsoft.Dynamics.CRM.BooleanAttributeMetadata";
+  }
+
+  throw new Error(`Type ${attribute.AttributeType} is not allowed as swim lane separator.`);
+};
+
+const fetchSeparatorMetadata = async (entity: string, swimLaneSource: string, metadata: Metadata) => {
+  const field = metadata.Attributes.find(a => a.LogicalName.toLowerCase() === swimLaneSource.toLowerCase());
+  const typeUrl = determineAttributeUrl(field);
+
+  const response: Attribute = await WebApiClient.Retrieve({entityName: "EntityDefinition", queryParams: `(LogicalName='${entity}')/Attributes(LogicalName='${field.LogicalName}')/${typeUrl}?$expand=OptionSet`});
+  return response;
+};
+
+const fetchMetadata = async (entity: string) => {
+  const response: Metadata = await WebApiClient.Retrieve({entityName: "EntityDefinition", queryParams: `(LogicalName='${entity}')?$expand=Attributes`});
+
+  return response;
 };
 
 const fetchConfig = async (configId: string): Promise<BoardViewConfig> => {
@@ -25,23 +49,57 @@ const fetchConfig = async (configId: string): Promise<BoardViewConfig> => {
   return JSON.parse(atob(config.content));
 };
 
-const fetchData = async (config: BoardViewConfig) => {
+const fetchData = async (config: BoardViewConfig, attribute: Attribute) => {
+  const lanes = attribute.AttributeType === "Boolean" ? [ attribute.OptionSet.FalseOption, attribute.OptionSet.TrueOption ] : attribute.OptionSet.Options;
   const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: config.entityName });
 
-  const lanes = data.reduce((all, record) => {
-    const laneId = record[config.swimLaneSource] ? record[config.swimLaneSource].toString() : "__unset";
+  return data.reduce((all: Array<BoardLane>, record) => {
+    const laneSource = record[config.swimLaneSource];
 
-    if (all[laneId]) {
-      all[laneId].push(record);
+    if (!laneSource) {
+      const undefinedLane = all.find(l => !l.option);
+
+      if (undefinedLane) {
+        undefinedLane.data.push(record);
+      }
+      else {
+        all.push({ option: undefined, data: [ record ] });
+      }
+
+      return all;
+    }
+
+    if (attribute.AttributeType === "Boolean") {
+      const lane = all.find(l => l.option && l.option.Value == laneSource);
+
+      if (lane) {
+        lane.data.push(record);
+      }
+      else {
+        all.push({ option: !laneSource ? lanes[0] : lanes[1], data: [ record ]});
+      }
+
+      return all;
+    }
+
+    const lane = all.find(l => l.option && l.option.Value === laneSource);
+
+    if (lane) {
+      lane.data.push(record);
     }
     else {
-      all[laneId] = [ record ];
+      const existingLane = lanes.find(l => l.Value === laneSource);
+
+      if (existingLane) {
+        all.push({ option: existingLane, data: [record]});
+      }
+      else {
+        console.warn(`Found data with non valid option set data, did you reorganize or delete option set values? Data needs to be reorganized then. Value found: ${laneSource}`);
+      }
     }
 
     return all;
-    }, {} as {[key: string]: Array<any>});
-
-  return lanes;
+    }, lanes.map(l => ({ option: l, data: [] })) as Array<BoardLane>);
 };
 
 export const Board = () => {
@@ -54,11 +112,14 @@ export const Board = () => {
       const user = await WebApiClient.Retrieve({ entityName: "systemuser", entityId: userId, queryParams: "?$select=oss_defaultboardid"});
 
       const config = await fetchConfig(user.oss_defaultboardid);
-      const swimLaneField = await fetchSwimLaneField(config.entityName);
+      const metadata = await fetchMetadata(config.entityName);
+      const attributeMetadata = await fetchSeparatorMetadata(config.entityName, config.swimLaneSource, metadata);
 
       appDispatch({ type: "setConfig", payload: config });
+      appDispatch({ type: "setMetadata", payload: metadata });
+      appDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
 
-      const data = await fetchData(config);
+      const data = await fetchData(config, attributeMetadata);
       appDispatch({ type: "setBoardData", payload: data });
     }
 
@@ -73,7 +134,7 @@ export const Board = () => {
   };
 
   const refresh = async () => {
-    const data = await fetchData(appState.config);
+    const data = await fetchData(appState.config, appState.separatorMetadata);
     appDispatch({ type: "setBoardData", payload: data });
   };
 
@@ -91,7 +152,7 @@ export const Board = () => {
       </Navbar>
       <Card>
         <div id="flexContainer" style={{ display: "flex", margin: "5px", flexDirection: "row" }}>
-          { appState.boardData && Object.keys(appState.boardData).map(d => <Lane key={d} laneId={d} />)}
+          { appState.boardData && appState.boardData.map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} lane={d} />)}
         </div>
       </Card>
     </div>

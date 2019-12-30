@@ -1,12 +1,16 @@
 import React, { useContext } from "react";
 import { ParseSearch } from "./ParseSearch";
 import { BoardViewConfig } from "./BoardViewConfig";
+import { Metadata, Attribute } from "../domain/Metadata";
+import { BoardLane } from "./BoardLane";
 
 type Action = { type: "setAppId", payload: string }
     | { type: "setConfigId", payload: string }
     | { type: "setConfig", payload: BoardViewConfig }
     | { type: "setSelectedRecord", payload: Xrm.LookupValue }
-    | { type: "setBoardData", payload: { [key: string]: Array<any> } };
+    | { type: "setBoardData", payload: Array<BoardLane> }
+    | { type: "setMetadata", payload: Metadata }
+    | { type: "setSeparatorMetadata", payload: Attribute };
 
 export type Dispatch = (action: Action) => void;
 
@@ -14,8 +18,10 @@ export type AppStateProps = {
     appId?: string;
     configId?: string;
     config?: BoardViewConfig;
+    metadata?: Metadata;
+    separatorMetadata?: Attribute;
     selectedRecord?: { entityType: string, id: string, name?: string };
-    boardData?: { [key: string]: Array<any> };
+    boardData?: Array<BoardLane>;
 };
 
 type AppContextProps = {
@@ -38,6 +44,12 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         }
         case "setConfig": {
             return { ...state, config: action.payload };
+        }
+        case "setMetadata": {
+            return { ...state, metadata: action.payload };
+        }
+        case "setSeparatorMetadata": {
+            return { ...state, separatorMetadata: action.payload };
         }
     }
 }

@@ -14,7 +14,7 @@ export const Tile = (props: TileProps) => {
     };
 
     return (
-        <Card key={props.data[`${appState.config.entityName}id`]} onClick={setSelectedRecord}>
+        <Card onClick={setSelectedRecord}>
             <Card.Body>
                 {props.data.createdon}
             </Card.Body>

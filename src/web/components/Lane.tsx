@@ -2,9 +2,10 @@ import React, { useContext, useEffect, useState } from "react";
 import { useAppContext } from "../domain/AppState";
 import { Col, Card } from "react-bootstrap";
 import { Tile } from "./Tile";
+import { BoardLane } from "../domain/BoardLane";
 
 interface LaneProps {
-    laneId: string;
+    lane: BoardLane;
 }
 
 export const Lane = (props: LaneProps) => {
@@ -12,10 +13,10 @@ export const Lane = (props: LaneProps) => {
 
     return (
         <div style={{ minWidth: "100px", margin: "5px", flex: "1 1 0" }}>
-            <Card key={`lane_${props.laneId}`}>
+            <Card>
                 <Card.Body>
-                    <Card.Title>{props.laneId}</Card.Title>
-                    {appState.boardData[props.laneId].map(d => <Tile data={d} />)}
+                    <Card.Title>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
+                    {props.lane.data.map(d => <Tile key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} data={d} />)}
                 </Card.Body>
             </Card>
         </div>
