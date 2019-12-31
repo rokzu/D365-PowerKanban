@@ -15,13 +15,15 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setSeparatorMetadata", payload: Attribute }
     | { type: "setStateMetadata", payload: Attribute }
     | { type: "setSelectedView", payload: SavedQuery }
-    | { type: "setSelectedForm", payload: CardForm };
+    | { type: "setSelectedForm", payload: CardForm }
+    | { type: "setProgressText", payload: string };
 
 export type Dispatch = (action: Action) => void;
 
 export type AppStateProps = {
     appId?: string;
     configId?: string;
+    progressText?: string;
     config?: BoardViewConfig;
     metadata?: Metadata;
     selectedView?: SavedQuery;
@@ -80,6 +82,9 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         }
         case "setSelectedForm": {
             return { ...state, selectedForm: action.payload };
+        }
+        case "setProgressText": {
+            return { ...state, progressText: action.payload };
         }
     }
 }

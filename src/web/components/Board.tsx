@@ -119,9 +119,17 @@ export const Board = () => {
   useEffect(() => {
     async function initializeConfig() {
       const userId = formatGuid(Xrm.Page.context.getUserId());
+
+      appDispatch({ type: "setProgressText", payload: "Retrieving user settings" });
+
       const user = await WebApiClient.Retrieve({ entityName: "systemuser", entityId: userId, queryParams: "?$select=oss_defaultboardid"});
 
+      appDispatch({ type: "setProgressText", payload: "Fetching configuration" });
+
       const config = await fetchConfig(user.oss_defaultboardid);
+
+      appDispatch({ type: "setProgressText", payload: "Fetching meta data" });
+
       const metadata = await fetchMetadata(config.entityName);
       const attributeMetadata = await fetchSeparatorMetadata(config.entityName, config.swimLaneSource, metadata);
       const stateMetadata = await fetchSeparatorMetadata(config.entityName, "statecode", metadata);
@@ -130,12 +138,15 @@ export const Board = () => {
       appDispatch({ type: "setMetadata", payload: metadata });
       appDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
       appDispatch({ type: "setStateMetadata", payload: stateMetadata });
+      appDispatch({ type: "setProgressText", payload: "Fetching views" });
 
       const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
       setViews(views);
 
       const defaultView = views[0];
+
       appDispatch({ type: "setSelectedView", payload: defaultView });
+      appDispatch({ type: "setProgressText", payload: "Fetching forms" });
 
       const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq 'incident' and type eq 11`});
       setCardForms(forms);
@@ -143,9 +154,12 @@ export const Board = () => {
       const defaultForm = forms[0];
 
       appDispatch({ type: "setSelectedForm", payload: defaultForm });
+      appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
       const data = await fetchData(defaultView.fetchxml, config, attributeMetadata);
+
       appDispatch({ type: "setBoardData", payload: data });
+      appDispatch({ type: "setProgressText", payload: undefined });
     }
 
     initializeConfig();
@@ -159,8 +173,12 @@ export const Board = () => {
   };
 
   const refresh = async (fetchXml?: string) => {
+    appDispatch({ type: "setProgressText", payload: "Fetching data" });
+
     const data = await fetchData(fetchXml ?? appState.selectedView.fetchxml, appState.config, appState.separatorMetadata);
+
     appDispatch({ type: "setBoardData", payload: data });
+    appDispatch({ type: "setProgressText", payload: undefined });
   };
 
   const newRecord = async () => {
@@ -216,11 +234,11 @@ export const Board = () => {
           </Nav>
           <Nav className="pull-right">
             { appState.config && appState.config.showCreateButton && <Button onClick={newRecord}>Create New</Button> }
-            <Button style={{marginLeft: "5px"}} onClick={refresh as any}>Refresh</Button>
+            <Button style={{marginLeft: "5px"}} onClick={() => refresh()}>Refresh</Button>
           </Nav>
         </Navbar.Collapse>
       </Navbar>
-      <div id="flexContainer" style={{ display: "flex", marginTop: "59px", flexDirection: "row", backgroundColor: "#efefef" }}>
+      <div id="flexContainer" style={{ display: "flex", marginTop: "59px", flexDirection: "row", backgroundColor: "#efefef", overflow: "auto" }}>
         { appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} lane={d} />)}
       </div>
     </div>
