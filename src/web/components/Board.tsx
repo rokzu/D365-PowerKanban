@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown } from "react-bootstrap";
+import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl } from "react-bootstrap";
 import WebApiClient from "xrm-webapi-client";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
 import UserInputModal from "./UserInputModalProps";
@@ -9,6 +9,7 @@ import { Lane } from "./Lane";
 import { Metadata, Attribute, Option } from "../domain/Metadata";
 import { BoardLane } from "../domain/BoardLane";
 import { SavedQuery } from "../domain/SavedQuery";
+import { CardForm } from "../domain/CardForm";
 
 const determineAttributeUrl = (attribute: Attribute) => {
   if (attribute.AttributeType === "Picklist") {
@@ -111,7 +112,9 @@ const fetchData = async (fetchXml: string, config: BoardViewConfig, attribute: A
 export const Board = () => {
   const [ appState, appDispatch ] = useAppContext();
   const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
+  const [ cardForms, setCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
   const [ showDeletionVerification, setShowDeletionVerification ] = useState(false);
+  const [ stateFilters, setStateFilters ]: [Array<Option>, (options: Array<Option>) => void] = useState([]);
 
   useEffect(() => {
     async function initializeConfig() {
@@ -121,16 +124,25 @@ export const Board = () => {
       const config = await fetchConfig(user.oss_defaultboardid);
       const metadata = await fetchMetadata(config.entityName);
       const attributeMetadata = await fetchSeparatorMetadata(config.entityName, config.swimLaneSource, metadata);
+      const stateMetadata = await fetchSeparatorMetadata(config.entityName, "statecode", metadata);
 
       appDispatch({ type: "setConfig", payload: config });
       appDispatch({ type: "setMetadata", payload: metadata });
       appDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
+      appDispatch({ type: "setStateMetadata", payload: stateMetadata });
 
-      const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
+      const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
       setViews(views);
 
       const defaultView = views[0];
       appDispatch({ type: "setSelectedView", payload: defaultView });
+
+      const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq 'incident' and type eq 11`});
+      setCardForms(forms);
+
+      const defaultForm = forms[0];
+
+      appDispatch({ type: "setSelectedForm", payload: defaultForm });
 
       const data = await fetchData(defaultView.fetchxml, config, attributeMetadata);
       appDispatch({ type: "setBoardData", payload: data });
@@ -164,6 +176,24 @@ export const Board = () => {
     refresh(view.fetchxml);
   };
 
+  const setForm = (event: any) => {
+    const formId = event.target.id;
+    const form = cardForms.find(f => f.formid === formId);
+
+    appDispatch({ type: "setSelectedForm", payload: form });
+  };
+
+  const setStateFilter = (event: any) => {
+    const stateValue = event.target.id;
+
+    if (stateFilters.some(f => f.Value == stateValue)) {
+      setStateFilters(stateFilters.filter(f => f.Value != stateValue));
+    }
+    else {
+      setStateFilters([...stateFilters, appState.stateMetadata.OptionSet.Options.find(o => o.Value == stateValue)]);
+    }
+  };
+
   return (
     <div style={{height: "100%"}}>
       <UserInputModal title="Verify Deletion" yesCallBack={deleteRecord} finally={hideDeletionVerification} show={showDeletionVerification}>
@@ -175,6 +205,14 @@ export const Board = () => {
             <DropdownButton id="viewSelector" title={appState.selectedView?.name ?? "Select view"}>
               { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
             </DropdownButton>
+            <DropdownButton id="formSelector" title={appState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
+              { cardForms?.map(f => <Dropdown.Item onClick={setForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
+            </DropdownButton>
+            { appState.config?.swimLaneSource === "statuscode" &&
+              <DropdownButton id="formSelector" title={stateFilters.length ? stateFilters.map(f => f.Label.UserLocalizedLabel.Label).join("|") : "All states"} style={{marginLeft: "5px"}}>
+                { appState.stateMetadata?.OptionSet.Options.map(o => <Dropdown.Item onClick={setStateFilter} as="button" id={o.Value} key={o.Value}>{o.Label.UserLocalizedLabel.Label}</Dropdown.Item>) }
+              </DropdownButton>
+            }
           </Nav>
           <Nav className="pull-right">
             { appState.config && appState.config.showCreateButton && <Button onClick={newRecord}>Create New</Button> }
@@ -182,11 +220,9 @@ export const Board = () => {
           </Nav>
         </Navbar.Collapse>
       </Navbar>
-      <Card style={{marginTop: "54px"}}>
-        <div id="flexContainer" style={{ display: "flex", margin: "5px", flexDirection: "row" }}>
-          { appState.boardData && appState.boardData.map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} lane={d} />)}
-        </div>
-      </Card>
+      <div id="flexContainer" style={{ display: "flex", marginTop: "59px", flexDirection: "row", backgroundColor: "#efefef" }}>
+        { appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} lane={d} />)}
+      </div>
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { BoardViewConfig } from "./BoardViewConfig";
 import { Metadata, Attribute } from "../domain/Metadata";
 import { BoardLane } from "./BoardLane";
 import { SavedQuery } from "./SavedQuery";
+import { CardForm } from "./CardForm";
 
 type Action = { type: "setAppId", payload: string }
     | { type: "setConfigId", payload: string }
@@ -12,7 +13,9 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setBoardData", payload: Array<BoardLane> }
     | { type: "setMetadata", payload: Metadata }
     | { type: "setSeparatorMetadata", payload: Attribute }
-    | { type: "setSelectedView", payload: SavedQuery };
+    | { type: "setStateMetadata", payload: Attribute }
+    | { type: "setSelectedView", payload: SavedQuery }
+    | { type: "setSelectedForm", payload: CardForm };
 
 export type Dispatch = (action: Action) => void;
 
@@ -22,8 +25,10 @@ export type AppStateProps = {
     config?: BoardViewConfig;
     metadata?: Metadata;
     selectedView?: SavedQuery;
+    selectedForm?: CardForm;
     selectedViewData?: { columns: Array<string>; linkEntities: Array<{ entityName: string, alias: string }> }
     separatorMetadata?: Attribute;
+    stateMetadata?: Attribute;
     selectedRecord?: { entityType: string, id: string, name?: string };
     boardData?: Array<BoardLane>;
 };
@@ -67,8 +72,14 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         case "setSeparatorMetadata": {
             return { ...state, separatorMetadata: action.payload };
         }
+        case "setStateMetadata": {
+            return { ...state, stateMetadata: action.payload };
+        }
         case "setSelectedView": {
             return { ...state, selectedView: action.payload, selectedViewData: { columns: parseLayoutColumns(action.payload.layoutxml), linkEntities: parseLinksFromFetch(action.payload.fetchxml) } };
+        }
+        case "setSelectedForm": {
+            return { ...state, selectedForm: action.payload };
         }
     }
 }
