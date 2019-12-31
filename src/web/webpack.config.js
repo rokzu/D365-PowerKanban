@@ -12,7 +12,7 @@ module.exports = {
     },
 
     optimization: {
-        minimize: false
+        minimize: true
     },
 
     // Enable sourcemaps for debugging webpack"s output.

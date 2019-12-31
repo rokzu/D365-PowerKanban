@@ -12,6 +12,9 @@
   "author": "",
   "license": "",
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.26",
+    "@fortawesome/free-solid-svg-icons": "^5.12.0",
+    "@fortawesome/react-fontawesome": "^0.1.8",
     "cpx": "^1.5.0",
     "css-loader": "latest",
     "style-loader": "^0.23.1"
