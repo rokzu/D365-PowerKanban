@@ -3,13 +3,12 @@ import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormCont
 import WebApiClient from "xrm-webapi-client";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
 import UserInputModal from "./UserInputModalProps";
-import { AppStateProps, Dispatch, useAppContext } from "../domain/AppState";
+import { useAppContext } from "../domain/AppState";
 import { formatGuid } from "../domain/GuidFormatter";
 import { Lane } from "./Lane";
 import { Metadata, Attribute, Option } from "../domain/Metadata";
-import { BoardLane } from "../domain/BoardLane";
 import { SavedQuery } from "../domain/SavedQuery";
-import { CardForm } from "../domain/CardForm";
+import { CardForm, parseCardForm } from "../domain/CardForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { fetchData } from "../domain/fetchData";
 
@@ -95,9 +94,10 @@ export const Board = () => {
       appDispatch({ type: "setProgressText", payload: "Fetching forms" });
 
       const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq 'incident' and type eq 11`});
-      setCardForms(forms);
+      const processedForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
+      setCardForms(processedForms);
 
-      const defaultForm = forms[0];
+      const defaultForm = processedForms[0];
 
       appDispatch({ type: "setSelectedForm", payload: defaultForm });
       appDispatch({ type: "setProgressText", payload: "Fetching data" });
