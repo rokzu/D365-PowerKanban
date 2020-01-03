@@ -3,7 +3,7 @@ interface FieldLabel {
     lcid: string;
 }
 
-interface CardCell {
+export interface CardCell {
     field: string;
     labels: Array<FieldLabel>;
 }
@@ -12,7 +12,7 @@ interface CardRow {
     cells: Array<CardCell>;
 }
 
-interface CardSegment {
+export interface CardSegment {
     rows: Array<CardRow>;
 }
 

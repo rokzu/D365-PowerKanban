@@ -102,7 +102,7 @@ export const Board = () => {
       appDispatch({ type: "setSelectedForm", payload: defaultForm });
       appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
-      const data = await fetchData(defaultView.fetchxml, config, attributeMetadata);
+      const data = await fetchData(defaultView.fetchxml, defaultForm, config, metadata, attributeMetadata);
 
       appDispatch({ type: "setBoardData", payload: data });
       appDispatch({ type: "setProgressText", payload: undefined });
@@ -118,10 +118,10 @@ export const Board = () => {
 
   };
 
-  const refresh = async (fetchXml?: string) => {
+  const refresh = async (fetchXml?: string, selectedForm?: CardForm) => {
     appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
-    const data = await fetchData(fetchXml ?? appState.selectedView.fetchxml, appState.config, appState.separatorMetadata);
+    const data = await fetchData(fetchXml ?? appState.selectedView.fetchxml, selectedForm ?? appState.selectedForm, appState.config, appState.metadata, appState.separatorMetadata);
 
     appDispatch({ type: "setBoardData", payload: data });
     appDispatch({ type: "setProgressText", payload: undefined });
@@ -145,6 +145,7 @@ export const Board = () => {
     const form = cardForms.find(f => f.formid === formId);
 
     appDispatch({ type: "setSelectedForm", payload: form });
+    refresh(undefined, form);
   };
 
   const setStateFilter = (event: any) => {

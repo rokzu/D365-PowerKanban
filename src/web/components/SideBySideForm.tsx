@@ -18,7 +18,7 @@ export const SideBySideForm = (props: FormProps) => {
     appDispatch({ type: "setSelectedRecord", payload: undefined });
     appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
-    const data = await fetchData(appState.selectedView.fetchxml, appState.config, appState.separatorMetadata);
+    const data = await fetchData(appState.selectedView.fetchxml, appState.selectedForm, appState.config, appState.metadata, appState.separatorMetadata);
 
     appDispatch({ type: "setBoardData", payload: data });
     appDispatch({ type: "setProgressText", payload: undefined });

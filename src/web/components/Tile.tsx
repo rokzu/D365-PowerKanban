@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useAppContext } from "../domain/AppState";
 import { Card, Table, Row, Col } from "react-bootstrap";
+import { FieldRow } from "./FieldRow";
 
 interface TileProps {
     data: any;
@@ -13,19 +14,25 @@ export const Tile = (props: TileProps) => {
         appDispatch({ type: "setSelectedRecord", payload: { entityType: appState.config.entityName, id: props.data[appState.metadata?.PrimaryIdAttribute] } });
     };
 
-    const view = appState.selectedView;
+    const cardForm = appState.selectedForm;
 
     return (
-        <Card onClick={setSelectedRecord} style={{marginBottom: "5px"}}>
+        <Card onClick={setSelectedRecord} style={{marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: "#3b79b7", borderLeftWidth: "3px"}}>
+            <Card.Header>
+                <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666" }}>
+                    { cardForm.parsed.header.rows.map(r => <div style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="header" data={props.data} cells={r.cells} /></div>) }
+                </div>
+            </Card.Header>
             <Card.Body>
-                { appState.selectedViewData?.columns.map(c =>
-                    <div key={`${props.data[appState.metadata?.PrimaryIdAttribute]}_${c}_header`}>
-                        <h4>{appState.metadata.Attributes.find(a => a.LogicalName === c)?.DisplayName.UserLocalizedLabel.Label}</h4>
-                        <span>{props.data[`${c}@OData.Community.Display.V1.FormattedValue`] ?? props.data[`_${c}_value@OData.Community.Display.V1.FormattedValue`] ?? props.data[c]}</span>
-                        <br />
-                    </div>)
-                }
+                <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
+                    { cardForm.parsed.body.rows.map(r => <div style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="body" data={props.data} cells={r.cells} /></div>) }
+                </div>
             </Card.Body>
+            <Card.Footer style={{ backgroundColor: "#efefef" }}>
+                <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
+                    { cardForm.parsed.footer.rows.map(r => <div style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="footer" data={props.data} cells={r.cells} /></div>) }
+                </div>
+            </Card.Footer>
         </Card>
     );
 };
