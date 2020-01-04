@@ -30,7 +30,7 @@ export const FieldRow = (props: FieldRowProps) => {
 
         if (lookupFormatted) {
             const targetEntity = props.data[`_${fieldName}_value@Microsoft.Dynamics.CRM.lookuplogicalname`];
-            return (<Button style={{padding: "0px"}} id={`${targetEntity}_${props.data[`_${fieldName}_value`]}`} onClick={openRecord} variant="link">{lookupFormatted}</Button>);2
+            return (<Button style={{padding: "0px"}} id={`${targetEntity}_${props.data[`_${fieldName}_value`]}`} onClick={openRecord} variant="link">{lookupFormatted}</Button>);
         }
 
         return props.data[fieldName];
