@@ -1,3 +1,8 @@
+interface SecondaryEntity {
+    logicalName: string;
+    parentLookup: string;
+}
+
 export interface BoardViewConfig {
     entityName: string;
     defaultViewId: string;
@@ -6,4 +11,5 @@ export interface BoardViewConfig {
     allowTransitions: boolean;
     showDeleteButton: boolean;
     showDeactivateButton: boolean;
+    secondaryEntities: Array<SecondaryEntity>;
 }

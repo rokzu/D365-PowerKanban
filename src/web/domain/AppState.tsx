@@ -11,11 +11,14 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setConfig", payload: BoardViewConfig }
     | { type: "setSelectedRecord", payload: Xrm.LookupValue }
     | { type: "setBoardData", payload: Array<BoardLane> }
+    | { type: "setTaskData", payload: Array<any> }
     | { type: "setMetadata", payload: Metadata }
     | { type: "setSeparatorMetadata", payload: Attribute }
     | { type: "setStateMetadata", payload: Attribute }
     | { type: "setSelectedView", payload: SavedQuery }
     | { type: "setSelectedForm", payload: CardForm }
+    | { type: "setSelectedTaskView", payload: SavedQuery }
+    | { type: "setSelectedTaskForm", payload: CardForm }
     | { type: "setProgressText", payload: string };
 
 export type Dispatch = (action: Action) => void;
@@ -29,10 +32,14 @@ export type AppStateProps = {
     selectedView?: SavedQuery;
     selectedForm?: CardForm;
     selectedViewData?: { columns: Array<string>; linkEntities: Array<{ entityName: string, alias: string }> }
+    selectedTaskView?: SavedQuery;
+    selectedTaskForm?: CardForm;
+    selectedTaskViewData?: { columns: Array<string>; linkEntities: Array<{ entityName: string, alias: string }> }
     separatorMetadata?: Attribute;
     stateMetadata?: Attribute;
     selectedRecord?: { entityType: string, id: string, name?: string };
     boardData?: Array<BoardLane>;
+    taskData?: Array<any>;
 };
 
 type AppContextProps = {
@@ -83,8 +90,17 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         case "setSelectedForm": {
             return { ...state, selectedForm: action.payload };
         }
+        case "setSelectedTaskView": {
+            return { ...state, selectedTaskView: action.payload, selectedTaskViewData: { columns: parseLayoutColumns(action.payload.layoutxml), linkEntities: parseLinksFromFetch(action.payload.fetchxml) } };
+        }
+        case "setSelectedTaskForm": {
+            return { ...state, selectedTaskForm: action.payload };
+        }
         case "setProgressText": {
             return { ...state, progressText: action.payload };
+        }
+        case "setTaskData": {
+            return { ...state, taskData: action.payload };
         }
     }
 }

@@ -39,7 +39,7 @@ export const FieldRow = (props: FieldRowProps) => {
     if (props.type === "header") {
         return (
             <div style={{ display: "flex", flexDirection: "row" }}>
-                { props.cells.map((c, i) => <div key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ getData(c.field) }</div>) }
+                { props.cells.map((c, i) => <div title={appState.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ getData(c.field) }</div>) }
             </div>
         );
     }
@@ -47,7 +47,17 @@ export const FieldRow = (props: FieldRowProps) => {
     if (props.type === "footer") {
         return (
             <div style={{ display: "flex", flexDirection: "column" }}>
-                { props.cells.map((c, i) => <div key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`}>{ getData(c.field) }</div>) }
+                { props.cells.map((c, i) => {
+                    const data = getData(c.field);
+
+                    // tslint:disable-next-line: no-null-keyword
+                    if (data == null || data == "") {
+                        return (<div key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`}></div>);
+                    }
+
+                    return (<div key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }<span style={{float: "right", color: "#666666"}}>{appState.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label}</span></div>);
+                 })
+                }
             </div>
         );
     }

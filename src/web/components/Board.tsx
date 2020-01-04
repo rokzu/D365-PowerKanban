@@ -52,14 +52,17 @@ const fetchConfig = async (configId: string): Promise<BoardViewConfig> => {
   return JSON.parse(atob(config.content));
 };
 
-
+type DisplayState = "simple" | "task";
 
 export const Board = () => {
   const [ appState, appDispatch ] = useAppContext();
   const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
+  const [ taskViews, setTaskViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
   const [ cardForms, setCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
+  const [ taskCardForms, setTaskCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
   const [ showDeletionVerification, setShowDeletionVerification ] = useState(false);
   const [ stateFilters, setStateFilters ]: [Array<Option>, (options: Array<Option>) => void] = useState([]);
+  const [ displayState, setDisplayState ]: [DisplayState, (state: DisplayState) => void] = useState("simple" as any);
 
   useEffect(() => {
     async function initializeConfig() {
@@ -88,14 +91,31 @@ export const Board = () => {
       const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
       setViews(views);
 
+      if (config.secondaryEntities && config.secondaryEntities.length) {
+        const { value: taskViews} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.secondaryEntities[0].logicalName}' and querytype eq 0`});
+        setTaskViews(taskViews);
+        const defaultTaskView = taskViews[0];
+
+        appDispatch({ type: "setSelectedTaskView", payload: defaultTaskView });
+      }
+
       const defaultView = views[0];
 
       appDispatch({ type: "setSelectedView", payload: defaultView });
       appDispatch({ type: "setProgressText", payload: "Fetching forms" });
 
-      const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq 'incident' and type eq 11`});
+      const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.entityName}' and type eq 11`});
       const processedForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
       setCardForms(processedForms);
+
+      if (config.secondaryEntities && config.secondaryEntities.length) {
+        const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.secondaryEntities[0].logicalName}' and type eq 11`});
+        const processedTaskForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
+        setTaskCardForms(processedTaskForms);
+
+        const defaultTaskForm = processedTaskForms[0];
+        appDispatch({ type: "setSelectedTaskForm", payload: defaultTaskForm });
+      }
 
       const defaultForm = processedForms[0];
 
@@ -148,6 +168,20 @@ export const Board = () => {
     refresh(undefined, form);
   };
 
+  const setTaskView = (event: any) => {
+    const viewId = event.target.id;
+    const view = taskViews.find(v => v.savedqueryid === viewId);
+
+    appDispatch({ type: "setSelectedTaskView", payload: view });
+  };
+
+  const setTaskForm = (event: any) => {
+    const formId = event.target.id;
+    const form = taskCardForms.find(f => f.formid === formId);
+
+    appDispatch({ type: "setSelectedTaskForm", payload: form });
+  };
+
   const setStateFilter = (event: any) => {
     const stateValue = event.target.id;
 
@@ -157,6 +191,14 @@ export const Board = () => {
     else {
       setStateFilters([...stateFilters, appState.stateMetadata.OptionSet.Options.find(o => o.Value == stateValue)]);
     }
+  };
+
+  const setSimpleDisplay = () => {
+    setDisplayState("simple");
+  };
+
+  const setTaskDisplay = () => {
+    setDisplayState("task");
   };
 
   return (
@@ -173,6 +215,20 @@ export const Board = () => {
             <DropdownButton id="formSelector" title={appState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
               { cardForms?.map(f => <Dropdown.Item onClick={setForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
             </DropdownButton>
+            <DropdownButton id="displaySelector" title={displayState === "simple" ? "Simple" : "Tasks"} style={{marginLeft: "5px"}}>
+              <Dropdown.Item onClick={setSimpleDisplay} as="button" id="display_simple">Simple</Dropdown.Item>
+              <Dropdown.Item onClick={setTaskDisplay} as="button" id="display_tasks">Tasks</Dropdown.Item>
+            </DropdownButton>
+            { displayState === "task" &&
+              <>
+                <DropdownButton id="taskViewSelector" title={appState.selectedTaskView?.name ?? "Select view"} style={{marginLeft: "5px"}}>
+                  { taskViews?.map(v => <Dropdown.Item onClick={setTaskView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
+                </DropdownButton>
+                <DropdownButton id="taskFormSelector" title={appState.selectedTaskForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
+                  { taskCardForms?.map(f => <Dropdown.Item onClick={setTaskForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
+                </DropdownButton>
+              </>
+            }
             { appState.config?.swimLaneSource === "statuscode" &&
               <DropdownButton id="formSelector" title={stateFilters.length ? stateFilters.map(f => f.Label.UserLocalizedLabel.Label).join("|") : "All states"} style={{marginLeft: "5px"}}>
                 { appState.stateMetadata?.OptionSet.Options.map(o => <Dropdown.Item onClick={setStateFilter} as="button" id={o.Value} key={o.Value}>{o.Label.UserLocalizedLabel.Label}</Dropdown.Item>) }
