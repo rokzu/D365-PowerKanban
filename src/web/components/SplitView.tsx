@@ -23,7 +23,7 @@ export const SplitView = (props: SplitViewProps) => {
                 </div>
             </Modal.Body>
         </Modal>
-        <div style={{display: "flex", width: "100%", height: "100%"}}>
+        <div style={{display: "flex", width: "100%", height: "100%", backgroundColor: "#efefef", paddingTop: "50px"}}>
             <div style={appState.selectedRecord ? { minWidth: "600px", resize: "horizontal", overflow: "auto"} : { width: "100%" }}>
                 <Board />
             </div>

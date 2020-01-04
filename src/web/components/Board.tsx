@@ -187,7 +187,7 @@ export const Board = () => {
           </Nav>
         </Navbar.Collapse>
       </Navbar>
-      <div id="flexContainer" style={{ display: "flex", marginTop: "54px", flexDirection: "row", backgroundColor: "#efefef", overflow: "auto" }}>
+      <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "inherit" }}>
         { appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} lane={d} />)}
       </div>
     </div>
