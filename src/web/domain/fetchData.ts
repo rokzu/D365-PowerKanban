@@ -6,39 +6,48 @@ import { CardForm, CardSegment } from "./CardForm";
 
 const getFieldsFromSegment = (segment: CardSegment): Array<string> => segment.rows.reduce((all, curr) => [...all, ...curr.cells.map(c => c.field)], []);
 
-export const fetchData = async (fetchXml: string, form: CardForm, config: BoardViewConfig, metadata: Metadata, attribute: Attribute) => {
+export const fetchData = async (entityName: string, fetchXml: string, swimLaneSource: string, form: CardForm, metadata: Metadata, attribute: Attribute, options?: { additionalFields?: Array<string>, hideEmptyLanes?: boolean; additionalConditions?: Array<string> }): Promise<Array<BoardLane>> => {
     const formFields = Array.from(new Set([...getFieldsFromSegment(form.parsed.header), ...getFieldsFromSegment(form.parsed.body), ...getFieldsFromSegment(form.parsed.footer)]));
 
     // We make sure that the swim lane source is always included without having to update all views
-    if (formFields.every(f => f !== config.swimLaneSource)) {
-      formFields.push(config.swimLaneSource);
+    if (formFields.every(f => f !== swimLaneSource)) {
+      formFields.push(swimLaneSource);
+    }
+
+    if (options?.additionalFields) {
+      options.additionalFields.forEach(f => {
+        if (formFields.every(f => f !== swimLaneSource)) {
+          formFields.push(swimLaneSource);
+        }
+      });
     }
 
     // Fetch minimal data, we only want the IDs
     const order = /<order .*?(?=\/)\/>/g.exec(fetchXml);
     const noColumnFetch = fetchXml.replace(/<attribute .*?(?=\/)\/>/g, "");
-    const idFetch = noColumnFetch.replace(`<entity name=\"${config.entityName}\">`, `<entity name=\"${config.entityName}\"><attribute name=\"${metadata.PrimaryIdAttribute}\" />`);
+    const idFetch = noColumnFetch.replace(`<entity name=\"${entityName}\">`, `<entity name=\"${entityName}\"><attribute name=\"${metadata.PrimaryIdAttribute}\" />`);
 
-    const { value: records }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: config.entityName, fetchXml: idFetch, returnAllPages: true });
+    const { value: records }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: entityName, fetchXml: idFetch, returnAllPages: true });
     const ids: Array<string> = records.map(r => r[metadata.PrimaryIdAttribute]);
 
     const dataFetch = `<fetch no-lock="true">
-      <entity name="${config.entityName}">
+      <entity name="${entityName}">
         ${formFields.map(f => `<attribute name="${f}" />`).join("")}
         ${order.map(o => o).join("")}
         <filter type="and">
           <condition attribute="${metadata.PrimaryIdAttribute}" operator="in">
               ${ids.map(id => `<value>${id}</value>`).join("")}
           </condition>
+          ${options?.additionalConditions.join("")}
         </filter>
       </entity>
     </fetch>`;
 
     const lanes = attribute.AttributeType === "Boolean" ? [ attribute.OptionSet.FalseOption, attribute.OptionSet.TrueOption ] : attribute.OptionSet.Options.sort((a, b) => a.State - b.State);
-    const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: config.entityName, fetchXml: dataFetch, returnAllPages: true, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
+    const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: entityName, fetchXml: dataFetch, returnAllPages: true, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
 
     return data.reduce((all: Array<BoardLane>, record) => {
-      const laneSource = record[config.swimLaneSource];
+      const laneSource = record[swimLaneSource];
 
       if (!laneSource) {
         const undefinedLane = all.find(l => !l.option);
@@ -83,5 +92,5 @@ export const fetchData = async (fetchXml: string, form: CardForm, config: BoardV
       }
 
       return all;
-      }, lanes.map(l => ({ option: l, data: [] })) as Array<BoardLane>);
+      }, options?.hideEmptyLanes ? [] : lanes.map(l => ({ option: l, data: [] })) as Array<BoardLane>);
   };

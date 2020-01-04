@@ -11,6 +11,7 @@ import { SavedQuery } from "../domain/SavedQuery";
 import { CardForm, parseCardForm } from "../domain/CardForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { fetchData } from "../domain/fetchData";
+import { Tile } from "./Tile";
 
 const determineAttributeUrl = (attribute: Attribute) => {
   if (attribute.AttributeType === "Picklist") {
@@ -52,14 +53,14 @@ const fetchConfig = async (configId: string): Promise<BoardViewConfig> => {
   return JSON.parse(atob(config.content));
 };
 
-type DisplayState = "simple" | "task";
+type DisplayState = "simple" | "advanced";
 
 export const Board = () => {
   const [ appState, appDispatch ] = useAppContext();
   const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
-  const [ taskViews, setTaskViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
+  const [ secondaryViews, setSecondaryViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
   const [ cardForms, setCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
-  const [ taskCardForms, setTaskCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
+  const [ secondaryCardForms, setSecondaryCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
   const [ showDeletionVerification, setShowDeletionVerification ] = useState(false);
   const [ stateFilters, setStateFilters ]: [Array<Option>, (options: Array<Option>) => void] = useState([]);
   const [ displayState, setDisplayState ]: [DisplayState, (state: DisplayState) => void] = useState("simple" as any);
@@ -82,6 +83,17 @@ export const Board = () => {
       const attributeMetadata = await fetchSeparatorMetadata(config.entityName, config.swimLaneSource, metadata);
       const stateMetadata = await fetchSeparatorMetadata(config.entityName, "statecode", metadata);
 
+      let secondaryMetadata: Metadata;
+      let secondaryAttributeMetadata: Attribute;
+
+      if (config.secondaryEntity) {
+        secondaryMetadata = await fetchMetadata(config.secondaryEntity.logicalName);
+        secondaryAttributeMetadata = await fetchSeparatorMetadata(config.secondaryEntity.logicalName, config.secondaryEntity.swimLaneSource, secondaryMetadata);
+
+        appDispatch({ type: "setSecondaryMetadata", payload: secondaryMetadata });
+        appDispatch({ type: "setSecondarySeparatorMetadata", payload: secondaryAttributeMetadata });
+      }
+
       appDispatch({ type: "setConfig", payload: config });
       appDispatch({ type: "setMetadata", payload: metadata });
       appDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
@@ -91,12 +103,13 @@ export const Board = () => {
       const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
       setViews(views);
 
-      if (config.secondaryEntities && config.secondaryEntities.length) {
-        const { value: taskViews} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.secondaryEntities[0].logicalName}' and querytype eq 0`});
-        setTaskViews(taskViews);
-        const defaultTaskView = taskViews[0];
+      let defaultSecondaryView;
+      if (config.secondaryEntity) {
+        const { value: secondaryViews} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.secondaryEntity.logicalName}' and querytype eq 0`});
+        setSecondaryViews(secondaryViews);
+        defaultSecondaryView = secondaryViews[0];
 
-        appDispatch({ type: "setSelectedTaskView", payload: defaultTaskView });
+        appDispatch({ type: "setSelectedSecondaryView", payload: defaultSecondaryView });
       }
 
       const defaultView = views[0];
@@ -108,13 +121,14 @@ export const Board = () => {
       const processedForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
       setCardForms(processedForms);
 
-      if (config.secondaryEntities && config.secondaryEntities.length) {
-        const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.secondaryEntities[0].logicalName}' and type eq 11`});
-        const processedTaskForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
-        setTaskCardForms(processedTaskForms);
+      let defaultSecondaryForm;
+      if (config.secondaryEntity) {
+        const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.secondaryEntity.logicalName}' and type eq 11`});
+        const processedSecondaryForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
+        setSecondaryCardForms(processedSecondaryForms);
 
-        const defaultTaskForm = processedTaskForms[0];
-        appDispatch({ type: "setSelectedTaskForm", payload: defaultTaskForm });
+        defaultSecondaryForm = processedSecondaryForms[0];
+        appDispatch({ type: "setSelectedSecondaryForm", payload: defaultSecondaryForm });
       }
 
       const defaultForm = processedForms[0];
@@ -122,7 +136,12 @@ export const Board = () => {
       appDispatch({ type: "setSelectedForm", payload: defaultForm });
       appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
-      const data = await fetchData(defaultView.fetchxml, defaultForm, config, metadata, attributeMetadata);
+      const data = await fetchData(config.entityName, defaultView.fetchxml, config.swimLaneSource, defaultForm, metadata, attributeMetadata);
+
+      if (config.secondaryEntity) {
+        const secondaryData = await fetchData(config.secondaryEntity.logicalName, defaultSecondaryView.fetchxml, config.secondaryEntity.swimLaneSource, defaultSecondaryForm, secondaryMetadata, secondaryAttributeMetadata, { additionalFields: [ config.secondaryEntity.parentLookup ], hideEmptyLanes: true, additionalConditions: [ `<condition attribute="${config.secondaryEntity.parentLookup}" operator="in">${data.reduce((all, curr) => all.concat(curr.data.map(d => d[metadata.PrimaryIdAttribute])), []).map(id => `<value>${id}</value>`).join("")}</condition>` ] });
+        appDispatch({ type: "setSecondaryData", payload: secondaryData });
+      }
 
       appDispatch({ type: "setBoardData", payload: data });
       appDispatch({ type: "setProgressText", payload: undefined });
@@ -141,7 +160,7 @@ export const Board = () => {
   const refresh = async (fetchXml?: string, selectedForm?: CardForm) => {
     appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
-    const data = await fetchData(fetchXml ?? appState.selectedView.fetchxml, selectedForm ?? appState.selectedForm, appState.config, appState.metadata, appState.separatorMetadata);
+    const data = await fetchData(appState.config.entityName, fetchXml ?? appState.selectedView.fetchxml, appState.config.swimLaneSource, selectedForm ?? appState.selectedForm, appState.metadata, appState.separatorMetadata);
 
     appDispatch({ type: "setBoardData", payload: data });
     appDispatch({ type: "setProgressText", payload: undefined });
@@ -168,18 +187,18 @@ export const Board = () => {
     refresh(undefined, form);
   };
 
-  const setTaskView = (event: any) => {
+  const setSecondaryView = (event: any) => {
     const viewId = event.target.id;
-    const view = taskViews.find(v => v.savedqueryid === viewId);
+    const view = secondaryViews.find(v => v.savedqueryid === viewId);
 
-    appDispatch({ type: "setSelectedTaskView", payload: view });
+    appDispatch({ type: "setSelectedSecondaryView", payload: view });
   };
 
-  const setTaskForm = (event: any) => {
+  const setSecondaryForm = (event: any) => {
     const formId = event.target.id;
-    const form = taskCardForms.find(f => f.formid === formId);
+    const form = secondaryCardForms.find(f => f.formid === formId);
 
-    appDispatch({ type: "setSelectedTaskForm", payload: form });
+    appDispatch({ type: "setSelectedSecondaryForm", payload: form });
   };
 
   const setStateFilter = (event: any) => {
@@ -197,8 +216,8 @@ export const Board = () => {
     setDisplayState("simple");
   };
 
-  const setTaskDisplay = () => {
-    setDisplayState("task");
+  const setSecondaryDisplay = () => {
+    setDisplayState("advanced");
   };
 
   return (
@@ -215,17 +234,17 @@ export const Board = () => {
             <DropdownButton id="formSelector" title={appState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
               { cardForms?.map(f => <Dropdown.Item onClick={setForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
             </DropdownButton>
-            <DropdownButton id="displaySelector" title={displayState === "simple" ? "Simple" : "Tasks"} style={{marginLeft: "5px"}}>
+            <DropdownButton id="displaySelector" title={displayState === "simple" ? "Simple" : "Secondarys"} style={{marginLeft: "5px"}}>
               <Dropdown.Item onClick={setSimpleDisplay} as="button" id="display_simple">Simple</Dropdown.Item>
-              <Dropdown.Item onClick={setTaskDisplay} as="button" id="display_tasks">Tasks</Dropdown.Item>
+              <Dropdown.Item onClick={setSecondaryDisplay} as="button" id="display_secondarys">Advanced</Dropdown.Item>
             </DropdownButton>
-            { displayState === "task" &&
+            { displayState === "advanced" &&
               <>
-                <DropdownButton id="taskViewSelector" title={appState.selectedTaskView?.name ?? "Select view"} style={{marginLeft: "5px"}}>
-                  { taskViews?.map(v => <Dropdown.Item onClick={setTaskView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
+                <DropdownButton id="secondaryViewSelector" title={appState.selectedSecondaryView?.name ?? "Select view"} style={{marginLeft: "5px"}}>
+                  { secondaryViews?.map(v => <Dropdown.Item onClick={setSecondaryView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
                 </DropdownButton>
-                <DropdownButton id="taskFormSelector" title={appState.selectedTaskForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
-                  { taskCardForms?.map(f => <Dropdown.Item onClick={setTaskForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
+                <DropdownButton id="secondaryFormSelector" title={appState.selectedSecondaryForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
+                  { secondaryCardForms?.map(f => <Dropdown.Item onClick={setSecondaryForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
                 </DropdownButton>
               </>
             }
@@ -243,8 +262,13 @@ export const Board = () => {
           </Nav>
         </Navbar.Collapse>
       </Navbar>
+      { displayState === "advanced" &&
+        <div id="adavancedContainer" style={{ display: "flex", flexDirection: "column", overflow: "inherit" }}>
+          { appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).reduce((all, curr) => all.concat(curr.data.map(d => <Tile cardForm={appState.selectedForm} metadata={appState.metadata} key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} style={{ margin: "5px" }} data={d} secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute])}))} />)), [])}
+        </div>
+      }
       <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "inherit" }}>
-        { appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} lane={d} />)}
+        { appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} cardForm={appState.selectedForm} metadata={appState.metadata} lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] !== r[appState.metadata.PrimaryIdAttribute])))}} />)}
       </div>
     </div>
   );

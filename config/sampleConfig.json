@@ -6,10 +6,9 @@
     "allowTransitions": true,
     "showDeleteButton": true,
     "showDeactivateButton": true,
-    "secondaryEntities": [
-        {
+    "secondaryEntity": {
              "logicalName": "task",
-             "parentLookup": "regardingobjectid"
-        }
-    ]
+             "parentLookup": "regardingobjectid",
+             "swimLaneSource": "statuscode"
+    }
 }

@@ -1,6 +1,7 @@
 interface SecondaryEntity {
     logicalName: string;
     parentLookup: string;
+    swimLaneSource: string;
 }
 
 export interface BoardViewConfig {
@@ -11,5 +12,5 @@ export interface BoardViewConfig {
     allowTransitions: boolean;
     showDeleteButton: boolean;
     showDeactivateButton: boolean;
-    secondaryEntities: Array<SecondaryEntity>;
+    secondaryEntity: SecondaryEntity;
 }
