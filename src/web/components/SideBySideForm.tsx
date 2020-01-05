@@ -50,7 +50,7 @@ export const SideBySideForm = (props: FormProps) => {
         <Button onClick={closeSideBySide} style={{ position: "absolute", top: "45%", left: "-18px" }}><FontAwesomeIcon icon="window-close" /></Button>
         <Button onClick={closeAndRefresh} style={{ position: "absolute", top: "50%", left: "-18px" }}><FontAwesomeIcon icon="sync" /></Button>
         <Button onClick={openInNewTab} style={{ position: "absolute", top: "55%", left: "-18px" }}><FontAwesomeIcon icon="window-maximize" /></Button>
-        <iframe srcDoc="" ref={_iframe} style={{width: "100%", height: "100%", border: 0}} src={`/main.aspx?appid=${appState.appId}&pagetype=entityrecord&etn=${appState.selectedRecord.entityType}&id=${appState.selectedRecord.id}`}></iframe>
+        <iframe ref={_iframe} style={{width: "100%", height: "100%", border: 0}} src={`/main.aspx?appid=${appState.appId}&pagetype=entityrecord&etn=${appState.selectedRecord.entityType}&id=${appState.selectedRecord.id}`}></iframe>
       </div>
   );
 };
