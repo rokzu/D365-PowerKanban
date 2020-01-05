@@ -4,16 +4,16 @@ import { Col, Card, Button } from "react-bootstrap";
 import { Tile } from "./Tile";
 import { BoardLane } from "../domain/BoardLane";
 import { CardCell } from "../domain/CardForm";
+import { Metadata } from "../domain/Metadata";
 
 interface FieldRowProps {
     cells: Array<CardCell>;
     data: any;
     type: "header" | "footer" | "body";
+    metadata: Metadata;
 }
 
 export const FieldRow = (props: FieldRowProps) => {
-    const [ appState, appDispatch ] = useAppContext();
-
     const openRecord = (event: any) => {
         const [entity, id] = event.target.id.split("_");
         Xrm.Navigation.openForm({ entityName: entity, entityId: id, openInNewWindow: true });
@@ -39,7 +39,7 @@ export const FieldRow = (props: FieldRowProps) => {
     if (props.type === "header") {
         return (
             <div style={{ display: "flex", flexDirection: "row" }}>
-                { props.cells.map((c, i) => <div title={appState.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ getData(c.field) }</div>) }
+                { props.cells.map((c, i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ getData(c.field) }</div>) }
             </div>
         );
     }
@@ -52,10 +52,10 @@ export const FieldRow = (props: FieldRowProps) => {
 
                     // tslint:disable-next-line: no-null-keyword
                     if (data == null || data == "") {
-                        return (<div key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`}></div>);
+                        return (<div key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}></div>);
                     }
 
-                    return (<div key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }<span style={{float: "right", color: "#666666"}}>{appState.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label}</span></div>);
+                    return (<div key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }<span style={{float: "right", color: "#666666"}}>{props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label}</span></div>);
                  })
                 }
             </div>
@@ -64,7 +64,7 @@ export const FieldRow = (props: FieldRowProps) => {
 
     return (
         <div style={{ display: "flex", flexDirection: "column" }}>
-            { props.cells.map((c, i) => <div key={`cell_${props.data[appState.metadata.PrimaryIdAttribute]}_${c.field}`}>{ getData(c.field) }</div>) }
+            { props.cells.map((c, i) => <div key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ getData(c.field) }</div>) }
         </div>
     );
 };

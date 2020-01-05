@@ -139,7 +139,7 @@ export const Board = () => {
       const data = await fetchData(config.entityName, defaultView.fetchxml, config.swimLaneSource, defaultForm, metadata, attributeMetadata);
 
       if (config.secondaryEntity) {
-        const secondaryData = await fetchData(config.secondaryEntity.logicalName, defaultSecondaryView.fetchxml, config.secondaryEntity.swimLaneSource, defaultSecondaryForm, secondaryMetadata, secondaryAttributeMetadata, { additionalFields: [ config.secondaryEntity.parentLookup ], hideEmptyLanes: true, additionalConditions: [ `<condition attribute="${config.secondaryEntity.parentLookup}" operator="in">${data.reduce((all, curr) => all.concat(curr.data.map(d => d[metadata.PrimaryIdAttribute])), []).map(id => `<value>${id}</value>`).join("")}</condition>` ] });
+        const secondaryData = await fetchData(config.secondaryEntity.logicalName, defaultSecondaryView.fetchxml, config.secondaryEntity.swimLaneSource, defaultSecondaryForm, secondaryMetadata, secondaryAttributeMetadata, { additionalFields: [ config.secondaryEntity.parentLookup ], additionalConditions: [ `<condition attribute="${config.secondaryEntity.parentLookup}" operator="in">${data.reduce((all, curr) => all.concat(curr.data.map(d => d[metadata.PrimaryIdAttribute])), []).map(id => `<value>${id}</value>`).join("")}</condition>` ] });
         appDispatch({ type: "setSecondaryData", payload: secondaryData });
       }
 
@@ -220,6 +220,9 @@ export const Board = () => {
     setDisplayState("advanced");
   };
 
+  const advancedData = displayState === "advanced" && appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).reduce((all, curr) => all.concat(curr.data.filter(d => appState.secondaryData.some(t => t.data.some(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute]))).map(d => <Tile borderColor={curr.option.Color ?? "#3b79b7"} cardForm={appState.selectedForm} metadata={appState.metadata} key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} style={{ margin: "5px" }} data={d} secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute])}))} />)), []);
+  const simpleData = appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} cardForm={appState.selectedForm} metadata={appState.metadata} lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] !== r[appState.metadata.PrimaryIdAttribute])))}} />);
+
   return (
     <div style={{height: "100%"}}>
       <UserInputModal title="Verify Deletion" yesCallBack={deleteRecord} finally={hideDeletionVerification} show={showDeletionVerification}>
@@ -234,7 +237,7 @@ export const Board = () => {
             <DropdownButton id="formSelector" title={appState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
               { cardForms?.map(f => <Dropdown.Item onClick={setForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
             </DropdownButton>
-            <DropdownButton id="displaySelector" title={displayState === "simple" ? "Simple" : "Secondarys"} style={{marginLeft: "5px"}}>
+            <DropdownButton id="displaySelector" title={displayState === "simple" ? "Simple" : "Advanced"} style={{marginLeft: "5px"}}>
               <Dropdown.Item onClick={setSimpleDisplay} as="button" id="display_simple">Simple</Dropdown.Item>
               <Dropdown.Item onClick={setSecondaryDisplay} as="button" id="display_secondarys">Advanced</Dropdown.Item>
             </DropdownButton>
@@ -262,13 +265,11 @@ export const Board = () => {
           </Nav>
         </Navbar.Collapse>
       </Navbar>
-      { displayState === "advanced" &&
-        <div id="adavancedContainer" style={{ display: "flex", flexDirection: "column", overflow: "inherit" }}>
-          { appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).reduce((all, curr) => all.concat(curr.data.map(d => <Tile cardForm={appState.selectedForm} metadata={appState.metadata} key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} style={{ margin: "5px" }} data={d} secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute])}))} />)), [])}
-        </div>
-      }
+      <div id="advancedContainer" style={{ display: "flex", flexDirection: "column", overflow: "inherit" }}>
+        { advancedData }
+      </div>
       <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "inherit" }}>
-        { appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} cardForm={appState.selectedForm} metadata={appState.metadata} lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] !== r[appState.metadata.PrimaryIdAttribute])))}} />)}
+        { simpleData }
       </div>
     </div>
   );
