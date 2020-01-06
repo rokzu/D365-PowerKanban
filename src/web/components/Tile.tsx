@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useAppContext, useAppDispatch } from "../domain/AppState";
-import { Card, Table, Row, Col, DropdownButton, Dropdown } from "react-bootstrap";
+import { Card, Table, Row, Col, DropdownButton, Dropdown, Button } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
 import { Metadata } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
@@ -31,10 +31,11 @@ export const Tile = (props: TileProps) => {
     return (
         <Card style={{marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: props.borderColor, borderLeftWidth: "3px", ...props.style}}>
             <Card.Header>
-                <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666" }}>
-                    { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
+                <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
+                    { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                 </div>
-                <DropdownButton id="displaySelector" variant="secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
+                <Button variant="outline-secondary" style={{float: "right", position: "absolute", top: "5px", right: "40px"}}><FontAwesomeIcon icon="bell" /></Button>
+                <DropdownButton id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
                     <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
                     <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
                 </DropdownButton>

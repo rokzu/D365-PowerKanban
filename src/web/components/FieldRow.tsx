@@ -64,7 +64,7 @@ export const FieldRow = (props: FieldRowProps) => {
 
     return (
         <div style={{ display: "flex", flexDirection: "column" }}>
-            { props.cells.map((c, i) => <div key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ getData(c.field) }</div>) }
+            { props.cells.map((c, i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ getData(c.field) }</div>) }
         </div>
     );
 };
