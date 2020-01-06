@@ -10,7 +10,7 @@ import { Metadata, Attribute, Option } from "../domain/Metadata";
 import { SavedQuery } from "../domain/SavedQuery";
 import { CardForm, parseCardForm } from "../domain/CardForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { fetchData } from "../domain/fetchData";
+import { fetchData, refresh } from "../domain/fetchData";
 import { Tile } from "./Tile";
 
 const determineAttributeUrl = (attribute: Attribute) => {
@@ -157,18 +157,9 @@ export const Board = () => {
 
   };
 
-  const refresh = async (fetchXml?: string, selectedForm?: CardForm) => {
-    appDispatch({ type: "setProgressText", payload: "Fetching data" });
-
-    const data = await fetchData(appState.config.entityName, fetchXml ?? appState.selectedView.fetchxml, appState.config.swimLaneSource, selectedForm ?? appState.selectedForm, appState.metadata, appState.separatorMetadata);
-
-    appDispatch({ type: "setBoardData", payload: data });
-    appDispatch({ type: "setProgressText", payload: undefined });
-  };
-
   const newRecord = async () => {
     await Xrm.Navigation.openForm({ entityName: appState.config.entityName, useQuickCreateForm: true }, undefined);
-    refresh();
+    refresh(appDispatch, appState);
   };
 
   const setView = (event: any) => {
@@ -176,7 +167,7 @@ export const Board = () => {
     const view = views.find(v => v.savedqueryid === viewId);
 
     appDispatch({ type: "setSelectedView", payload: view });
-    refresh(view.fetchxml);
+    refresh(appDispatch, appState, view.fetchxml);
   };
 
   const setForm = (event: any) => {
@@ -184,7 +175,7 @@ export const Board = () => {
     const form = cardForms.find(f => f.formid === formId);
 
     appDispatch({ type: "setSelectedForm", payload: form });
-    refresh(undefined, form);
+    refresh(appDispatch, appState, undefined, form);
   };
 
   const setSecondaryView = (event: any) => {
@@ -192,6 +183,7 @@ export const Board = () => {
     const view = secondaryViews.find(v => v.savedqueryid === viewId);
 
     appDispatch({ type: "setSelectedSecondaryView", payload: view });
+    refresh(appDispatch, appState, undefined, undefined, view.fetchxml, undefined);
   };
 
   const setSecondaryForm = (event: any) => {
@@ -199,6 +191,7 @@ export const Board = () => {
     const form = secondaryCardForms.find(f => f.formid === formId);
 
     appDispatch({ type: "setSelectedSecondaryForm", payload: form });
+    refresh(appDispatch, appState, undefined, undefined, undefined, form);
   };
 
   const setStateFilter = (event: any) => {
@@ -259,7 +252,7 @@ export const Board = () => {
           </Nav>
           <Nav className="pull-right">
             { appState.config && appState.config.showCreateButton && <Button onClick={newRecord}>Create New</Button> }
-            <Button style={{marginLeft: "5px"}} onClick={() => refresh()}>
+            <Button style={{marginLeft: "5px"}} onClick={() => refresh(appDispatch, appState)}>
               <FontAwesomeIcon icon="sync" />
             </Button>
           </Nav>

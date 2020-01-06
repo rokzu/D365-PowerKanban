@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { useAppContext } from "../domain/AppState";
 import { Button } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { fetchData } from "../domain/fetchData";
+import { fetchData, refresh } from "../domain/fetchData";
 
 interface FormProps {
 }
@@ -27,12 +27,8 @@ export const SideBySideForm = (props: FormProps) => {
 
   const closeAndRefresh = async () => {
     appDispatch({ type: "setSelectedRecord", payload: undefined });
-    appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
-    const data = await fetchData(appState.config.entityName, appState.selectedView.fetchxml, appState.config.swimLaneSource, appState.selectedForm, appState.metadata, appState.separatorMetadata);
-
-    appDispatch({ type: "setBoardData", payload: data });
-    appDispatch({ type: "setProgressText", payload: undefined });
+    await refresh(appDispatch, appState);
   };
 
   const openInNewTab = () => {
