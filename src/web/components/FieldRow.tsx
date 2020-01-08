@@ -1,8 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useAppContext } from "../domain/AppState";
 import { Col, Card, Button } from "react-bootstrap";
-import { Tile } from "./Tile";
-import { BoardLane } from "../domain/BoardLane";
 import { CardCell } from "../domain/CardForm";
 import { Metadata } from "../domain/Metadata";
 
