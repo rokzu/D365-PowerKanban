@@ -5,13 +5,13 @@ import { BoardViewConfig } from "../domain/BoardViewConfig";
 import UserInputModal from "./UserInputModalProps";
 import { useAppContext } from "../domain/AppState";
 import { formatGuid } from "../domain/GuidFormatter";
-import Lane from "./Lane";
+import { Lane } from "./Lane";
 import { Metadata, Attribute, Option } from "../domain/Metadata";
 import { SavedQuery } from "../domain/SavedQuery";
 import { CardForm, parseCardForm } from "../domain/CardForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { fetchData, refresh } from "../domain/fetchData";
-import Tile from "./Tile";
+import { Tile } from "./Tile";
 import { DndContainer } from "./DndContainer";
 
 const determineAttributeUrl = (attribute: Attribute) => {

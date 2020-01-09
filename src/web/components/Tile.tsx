@@ -1,15 +1,17 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useAppContext, useAppDispatch } from "../domain/AppState";
+import { useAppContext, useAppDispatch, AppStateProps, Dispatch } from "../domain/AppState";
 import { Card, Table, Row, Col, DropdownButton, Dropdown, Button } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
-import { Metadata } from "../domain/Metadata";
+import { Metadata, Option } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
 import { BoardLane } from "../domain/BoardLane";
-import Lane from "./Lane";
+import { Lane } from "./Lane";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ConnectDragSource, DragSourceMonitor, DragSource, DragSourceConnector } from "react-dnd";
 import { ItemTypes } from "../domain/ItemTypes";
 import { DndContainer } from "./DndContainer";
+import { refresh } from "../domain/fetchData";
+import WebApiClient from "xrm-webapi-client";
+import { useDrag, DragSourceMonitor } from 'react-dnd'
 
 interface TileProps {
     data: any;
@@ -18,14 +20,39 @@ interface TileProps {
     secondaryData?: Array<BoardLane>;
     borderColor: string;
     style?: React.CSSProperties;
-
-    isDragging: boolean;
-    connectDragSource: ConnectDragSource;
+    laneOption?: Option;
 }
 
-const Tile: React.FC<TileProps> = (props: TileProps) => {
+export const Tile = (props: TileProps) => {
     const [appState, appDispatch] = useAppContext();
-    const opacity = props.isDragging ? 0.4 : 1;
+    const [{ isDragging }, drag] = useDrag({
+        item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: ItemTypes.Tile },
+        end: (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
+            const dropResult = monitor.getDropResult();
+
+            if (!dropResult || !dropResult?.option?.Value) {
+                return;
+            }
+
+            const itemId = item.id;
+            const targetOption = dropResult.option as Option;
+            const update: any = { [appState.separatorMetadata.LogicalName]: targetOption.Value };
+
+            if (appState.separatorMetadata.LogicalName === "statuscode") {
+                update["statecode"] = targetOption.State;
+            }
+
+            WebApiClient.Update({ entityName: props.metadata.LogicalName, entityId: itemId, entity: update })
+            .then((r: any) => {
+                return refresh(appDispatch, appState);
+            });
+        },
+        collect: monitor => ({
+          isDragging: monitor.isDragging(),
+        }),
+    });
+
+    const opacity = isDragging ? 0.4 : 1;
 
     const setSelectedRecord = () => {
         appDispatch({ type: "setSelectedRecord", payload: { entityType: props.metadata.LogicalName, id: props.data[props.metadata?.PrimaryIdAttribute] } });
@@ -36,7 +63,7 @@ const Tile: React.FC<TileProps> = (props: TileProps) => {
     };
 
     return (
-        <div ref={props.connectDragSource}>
+        <div ref={drag}>
             <Card style={{opacity, marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: props.borderColor, borderLeftWidth: "3px", ...props.style}}>
                 <Card.Header>
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
@@ -67,22 +94,3 @@ const Tile: React.FC<TileProps> = (props: TileProps) => {
         </div>
     );
 };
-
-export default DragSource(
-    ItemTypes.Tile,
-    {
-        beginDrag: (props: TileProps) => ({ }),
-        endDrag(props: TileProps, monitor: DragSourceMonitor) {
-        const item = monitor.getItem();
-        const dropResult = monitor.getDropResult();
-
-        if (dropResult) {
-            alert(`You dropped ${item.name} into ${dropResult.name}!`);
-        }
-    },
-},
-(connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
-  connectDragSource: connect.dragSource(),
-  isDragging: monitor.isDragging(),
-}),
-)(Tile);
