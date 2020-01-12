@@ -25,7 +25,8 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setSelectedSecondaryForm", payload: CardForm }
     | { type: "setProgressText", payload: string }
     | { type: "setSubscriptions", payload: Array<Subscription>}
-    | { type: "setNotifications", payload: Array<Notification>};
+    | { type: "setNotifications", payload: Array<Notification>}
+    | { type: "setWorkIndicator", payload: boolean};
 
 export type Dispatch = (action: Action) => void;
 
@@ -50,6 +51,7 @@ export type AppStateProps = {
     secondaryData?: Array<BoardLane>;
     subscriptions?: Array<Subscription>;
     notifications?: Array<Notification>;
+    workIndicator?: boolean;
 };
 
 type AppContextProps = {
@@ -123,6 +125,9 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         }
         case "setNotifications": {
             return { ...state, notifications: action.payload };
+        }
+        case "setWorkIndicator": {
+            return { ...state, workIndicator: action.payload };
         }
     }
 }

@@ -34,6 +34,7 @@ export const Tile = (props: TileProps) => {
                 return;
             }
 
+            appDispatch({ type: "setWorkIndicator", payload: true });
             const itemId = item.id;
             const targetOption = dropResult.option as Option;
             const update: any = { [appState.separatorMetadata.LogicalName]: targetOption.Value };
@@ -44,6 +45,7 @@ export const Tile = (props: TileProps) => {
 
             WebApiClient.Update({ entityName: props.metadata.LogicalName, entityId: itemId, entity: update })
             .then((r: any) => {
+                appDispatch({ type: "setWorkIndicator", payload: false });
                 return refresh(appDispatch, appState);
             });
         },
@@ -78,6 +80,8 @@ export const Tile = (props: TileProps) => {
     };
 
     const subscribe = async () => {
+        appDispatch({ type: "setWorkIndicator", payload: true });
+
         await WebApiClient.Create({
             entityName: "oss_subscription",
             entity: {
@@ -87,9 +91,11 @@ export const Tile = (props: TileProps) => {
 
         const subscriptions = await fetchSubscriptions();
         appDispatch({ type: "setSubscriptions", payload: subscriptions });
+        appDispatch({ type: "setWorkIndicator", payload: false });
     };
 
     const unsubscribe = async () => {
+        appDispatch({ type: "setWorkIndicator", payload: true });
         const subscriptionsToDelete = appState.subscriptions.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
 
         await Promise.all(subscriptionsToDelete.map(s =>
@@ -101,9 +107,11 @@ export const Tile = (props: TileProps) => {
 
         const subscriptions = await fetchSubscriptions();
         appDispatch({ type: "setSubscriptions", payload: subscriptions });
+        appDispatch({ type: "setWorkIndicator", payload: false });
     };
 
     const clearNotifications = async () => {
+        appDispatch({ type: "setWorkIndicator", payload: true });
         const notificationsToDelete = appState.notifications.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
 
         await Promise.all(notificationsToDelete.map(s =>
@@ -115,6 +123,7 @@ export const Tile = (props: TileProps) => {
 
         const notifications = await fetchNotifications();
         appDispatch({ type: "setNotifications", payload: notifications });
+        appDispatch({ type: "setWorkIndicator", payload: false });
     };
 
     const notifications = appState.notifications.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
