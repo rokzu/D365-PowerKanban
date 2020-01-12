@@ -13,11 +13,12 @@ interface LaneProps {
     metadata: Metadata;
     cardForm: CardForm;
     minWidth?: string;
+    dndType?: string;
 }
 
 export const Lane = (props: LaneProps) => {
     const [{ canDrop, isOver }, drop] = useDrop({
-      accept: ItemTypes.Tile,
+      accept: props.dndType ?? ItemTypes.Tile,
       drop: () => ({ option: props.lane.option }),
       collect: monitor => ({
         isOver: monitor.isOver(),
@@ -41,7 +42,7 @@ export const Lane = (props: LaneProps) => {
             <Card style={{borderColor: "#d8d8d8", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
                 <Card.Body>
                     <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
-                    { props.lane.data.map(d => <Tile laneOption={props.lane.option} borderColor={borderColor} metadata={props.metadata} cardForm={props.cardForm} key={`tile_${d[props.metadata.PrimaryIdAttribute]}`} data={d} />) }
+                    { props.lane.data.map(d => <Tile dndType={props.dndType} laneOption={props.lane.option} borderColor={borderColor} metadata={props.metadata} cardForm={props.cardForm} key={`tile_${d[props.metadata.PrimaryIdAttribute]}`} data={d} />) }
                 </Card.Body>
             </Card>
         </div>

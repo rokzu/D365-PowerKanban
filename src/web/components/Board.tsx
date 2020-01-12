@@ -225,35 +225,35 @@ export const Board = () => {
       <Navbar bg="light" variant="light" fixed="top">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
-            <DropdownButton id="viewSelector" title={appState.selectedView?.name ?? "Select view"}>
+            <DropdownButton variant="outline-primary" id="viewSelector" title={appState.selectedView?.name ?? "Select view"}>
               { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
             </DropdownButton>
-            <DropdownButton id="formSelector" title={appState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
+            <DropdownButton variant="outline-primary" id="formSelector" title={appState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
               { cardForms?.map(f => <Dropdown.Item onClick={setForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
             </DropdownButton>
-            <DropdownButton id="displaySelector" title={displayState === "simple" ? "Simple" : "Advanced"} style={{marginLeft: "5px"}}>
+            <DropdownButton variant="outline-primary" id="displaySelector" title={displayState === "simple" ? "Simple" : "Advanced"} style={{marginLeft: "5px"}}>
               <Dropdown.Item onClick={setSimpleDisplay} as="button" id="display_simple">Simple</Dropdown.Item>
               <Dropdown.Item onClick={setSecondaryDisplay} as="button" id="display_secondarys">Advanced</Dropdown.Item>
             </DropdownButton>
             { displayState === "advanced" &&
               <>
-                <DropdownButton id="secondaryViewSelector" title={appState.selectedSecondaryView?.name ?? "Select view"} style={{marginLeft: "5px"}}>
+                <DropdownButton variant="outline-primary" id="secondaryViewSelector" title={appState.selectedSecondaryView?.name ?? "Select view"} style={{marginLeft: "5px"}}>
                   { secondaryViews?.map(v => <Dropdown.Item onClick={setSecondaryView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
                 </DropdownButton>
-                <DropdownButton id="secondaryFormSelector" title={appState.selectedSecondaryForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
+                <DropdownButton variant="outline-primary" id="secondaryFormSelector" title={appState.selectedSecondaryForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
                   { secondaryCardForms?.map(f => <Dropdown.Item onClick={setSecondaryForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
                 </DropdownButton>
               </>
             }
             { appState.config?.swimLaneSource === "statuscode" &&
-              <DropdownButton id="formSelector" title={stateFilters.length ? stateFilters.map(f => f.Label.UserLocalizedLabel.Label).join("|") : "All states"} style={{marginLeft: "5px"}}>
+              <DropdownButton variant="outline-primary" id="formSelector" title={stateFilters.length ? stateFilters.map(f => f.Label.UserLocalizedLabel.Label).join("|") : "All states"} style={{marginLeft: "5px"}}>
                 { appState.stateMetadata?.OptionSet.Options.map(o => <Dropdown.Item onClick={setStateFilter} as="button" id={o.Value} key={o.Value}>{o.Label.UserLocalizedLabel.Label}</Dropdown.Item>) }
               </DropdownButton>
             }
           </Nav>
           <Nav className="pull-right">
-            { appState.config && appState.config.showCreateButton && <Button onClick={newRecord}>Create New</Button> }
-            <Button style={{marginLeft: "5px"}} onClick={() => refresh(appDispatch, appState)}>
+            { appState.config && appState.config.showCreateButton && <Button variant="outline-primary" onClick={newRecord}>Create New</Button> }
+            <Button variant="outline-primary" style={{marginLeft: "5px"}} onClick={() => refresh(appDispatch, appState)}>
               <FontAwesomeIcon icon="sync" />
             </Button>
           </Nav>

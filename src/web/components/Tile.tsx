@@ -11,7 +11,7 @@ import { ItemTypes } from "../domain/ItemTypes";
 import { DndContainer } from "./DndContainer";
 import { refresh } from "../domain/fetchData";
 import WebApiClient from "xrm-webapi-client";
-import { useDrag, DragSourceMonitor } from 'react-dnd'
+import { useDrag, DragSourceMonitor } from "react-dnd";
 
 interface TileProps {
     data: any;
@@ -21,12 +21,13 @@ interface TileProps {
     borderColor: string;
     style?: React.CSSProperties;
     laneOption?: Option;
+    dndType?: string;
 }
 
 export const Tile = (props: TileProps) => {
     const [appState, appDispatch] = useAppContext();
     const [{ isDragging }, drag] = useDrag({
-        item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: ItemTypes.Tile },
+        item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile },
         end: (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
             const dropResult = monitor.getDropResult();
 
@@ -62,6 +63,18 @@ export const Tile = (props: TileProps) => {
         Xrm.Navigation.openForm({ entityName: props.metadata.LogicalName, entityId: props.data[props.metadata?.PrimaryIdAttribute], openInNewWindow: true });
     };
 
+    const createNewSecondary = async () => {
+        const parentLookup = appState.config.secondaryEntity.parentLookup;
+        const data = {
+            [parentLookup]: props.data[props.metadata.PrimaryIdAttribute],
+            [`${parentLookup}type`]: props.metadata.LogicalName,
+            [`${parentLookup}name`]: props.data[props.metadata.PrimaryNameAttribute]
+        };
+
+        await Xrm.Navigation.openForm({ entityName: appState.secondaryMetadata.LogicalName, useQuickCreateForm: true }, data);
+        refresh(appDispatch, appState);
+    };
+
     return (
         <div ref={drag}>
             <Card style={{opacity, marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: props.borderColor, borderLeftWidth: "3px", ...props.style}}>
@@ -73,6 +86,7 @@ export const Tile = (props: TileProps) => {
                     <DropdownButton id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
                         <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
                         <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
+                        { appState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {appState.secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
                     </DropdownButton>
                 </Card.Header>
                 <Card.Body>
@@ -80,9 +94,15 @@ export const Tile = (props: TileProps) => {
                         { props.cardForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="body" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                     { props.secondaryData &&
+                    <div>
+                        <span style={{marginLeft: "5px", fontSize: "larger"}}>
+                            {appState.secondaryMetadata.DisplayCollectionName.UserLocalizedLabel.Label}
+                        </span>
+                        <Button style={{marginLeft: "5px"}} variant="outline-secondary" onClick={createNewSecondary}><FontAwesomeIcon icon="plus-square" /></Button>
                         <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "auto" }}>
-                            { props.secondaryData.map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px" cardForm={appState.selectedSecondaryForm} metadata={appState.secondaryMetadata} lane={d} />) }
+                            { props.secondaryData.map(d => <Lane dndType={`${ItemTypes.Tile}_${props.data[props.metadata.PrimaryIdAttribute]}`} key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px" cardForm={appState.selectedSecondaryForm} metadata={appState.secondaryMetadata} lane={d} />) }
                         </div>
+                    </div>
                     }
                 </Card.Body>
                 <Card.Footer style={{ backgroundColor: "#efefef" }}>
