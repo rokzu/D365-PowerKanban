@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useAppContext, useAppDispatch, AppStateProps, Dispatch } from "../domain/AppState";
-import { Card, Table, Row, Col, DropdownButton, Dropdown, Button } from "react-bootstrap";
+import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
 import { Metadata, Option } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
@@ -8,8 +8,7 @@ import { BoardLane } from "../domain/BoardLane";
 import { Lane } from "./Lane";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ItemTypes } from "../domain/ItemTypes";
-import { DndContainer } from "./DndContainer";
-import { refresh } from "../domain/fetchData";
+import { refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
 import WebApiClient from "xrm-webapi-client";
 import { useDrag, DragSourceMonitor } from "react-dnd";
 
@@ -78,6 +77,49 @@ export const Tile = (props: TileProps) => {
         }
     };
 
+    const subscribe = async () => {
+        await WebApiClient.Create({
+            entityName: "oss_subscription",
+            entity: {
+                [`oss_${props.metadata.LogicalName}id@odata.bind`]: `/${props.metadata.LogicalCollectionName}(${props.data[props.metadata.PrimaryIdAttribute].replace("{", "").replace("}", "")})`
+            }
+        });
+
+        const subscriptions = await fetchSubscriptions();
+        appDispatch({ type: "setSubscriptions", payload: subscriptions });
+    };
+
+    const unsubscribe = async () => {
+        const subscriptionsToDelete = appState.subscriptions.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
+
+        await Promise.all(subscriptionsToDelete.map(s =>
+            WebApiClient.Delete({
+                entityName: "oss_subscription",
+                entityId: s.oss_subscriptionid
+            })
+        ));
+
+        const subscriptions = await fetchSubscriptions();
+        appDispatch({ type: "setSubscriptions", payload: subscriptions });
+    };
+
+    const clearNotifications = async () => {
+        const notificationsToDelete = appState.notifications.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
+
+        await Promise.all(notificationsToDelete.map(s =>
+            WebApiClient.Delete({
+                entityName: "oss_notification",
+                entityId: s.oss_notificationid
+            })
+        ));
+
+        const notifications = await fetchNotifications();
+        appDispatch({ type: "setNotifications", payload: notifications });
+    };
+
+    const notifications = appState.notifications.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
+    const bellStyle = notifications.length > 0 ? { color: "red" } : {};
+
     return (
         <div ref={drag}>
             <Card style={{opacity, marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: props.borderColor, borderLeftWidth: "3px", ...props.style}}>
@@ -85,7 +127,17 @@ export const Tile = (props: TileProps) => {
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
                         { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
-                    <Button variant="outline-secondary" style={{float: "right", position: "absolute", top: "5px", right: "40px"}}><FontAwesomeIcon icon="bell" /></Button>
+                    <Dropdown as={ButtonGroup} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}>
+                        <Button style={bellStyle} variant="outline-secondary">
+                            { appState.subscriptions.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]) ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" /> }
+                        </Button>
+                        <Dropdown.Toggle split variant="outline-secondary" id="dropdown-split-basic" />
+                        <Dropdown.Menu>
+                            <Dropdown.Item as="button" onClick={subscribe}><FontAwesomeIcon icon="bell" /> Subscribe</Dropdown.Item>
+                            <Dropdown.Item as="button" onClick={unsubscribe}><FontAwesomeIcon icon="bell-slash" /> Unsubscribe</Dropdown.Item>
+                            <Dropdown.Item as="button" onClick={clearNotifications}><FontAwesomeIcon icon="eye-slash" /> Mark as read</Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
                     <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
                         <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
                         <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>

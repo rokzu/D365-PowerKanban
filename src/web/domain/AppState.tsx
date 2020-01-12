@@ -5,6 +5,8 @@ import { Metadata, Attribute } from "../domain/Metadata";
 import { BoardLane } from "./BoardLane";
 import { SavedQuery } from "./SavedQuery";
 import { CardForm } from "./CardForm";
+import { Subscription } from "./Subscription";
+import { Notification } from "./Notification";
 
 type Action = { type: "setAppId", payload: string }
     | { type: "setConfigId", payload: string }
@@ -21,7 +23,9 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setSelectedForm", payload: CardForm }
     | { type: "setSelectedSecondaryView", payload: SavedQuery }
     | { type: "setSelectedSecondaryForm", payload: CardForm }
-    | { type: "setProgressText", payload: string };
+    | { type: "setProgressText", payload: string }
+    | { type: "setSubscriptions", payload: Array<Subscription>}
+    | { type: "setNotifications", payload: Array<Notification>};
 
 export type Dispatch = (action: Action) => void;
 
@@ -44,6 +48,8 @@ export type AppStateProps = {
     selectedRecord?: { entityType: string, id: string, name?: string };
     boardData?: Array<BoardLane>;
     secondaryData?: Array<BoardLane>;
+    subscriptions?: Array<Subscription>;
+    notifications?: Array<Notification>;
 };
 
 type AppContextProps = {
@@ -111,6 +117,12 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         }
         case "setSecondaryData": {
             return { ...state, secondaryData: action.payload };
+        }
+        case "setSubscriptions": {
+            return { ...state, subscriptions: action.payload };
+        }
+        case "setNotifications": {
+            return { ...state, notifications: action.payload };
         }
     }
 }

@@ -10,7 +10,7 @@ import { Metadata, Attribute, Option } from "../domain/Metadata";
 import { SavedQuery } from "../domain/SavedQuery";
 import { CardForm, parseCardForm } from "../domain/CardForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { fetchData, refresh } from "../domain/fetchData";
+import { fetchData, refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
 import { Tile } from "./Tile";
 import { DndContainer } from "./DndContainer";
 
@@ -135,6 +135,15 @@ export const Board = () => {
       const defaultForm = processedForms[0];
 
       appDispatch({ type: "setSelectedForm", payload: defaultForm });
+
+      appDispatch({ type: "setProgressText", payload: "Fetching subscriptions" });
+      const subscriptions = await fetchSubscriptions();
+      appDispatch({ type: "setSubscriptions", payload: subscriptions });
+
+      appDispatch({ type: "setProgressText", payload: "Fetching notifications" });
+      const notifications = await fetchNotifications();
+      appDispatch({ type: "setNotifications", payload: notifications });
+
       appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
       const data = await fetchData(config.entityName, defaultView.fetchxml, config.swimLaneSource, defaultForm, metadata, attributeMetadata);

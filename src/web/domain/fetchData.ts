@@ -96,6 +96,26 @@ export const fetchData = async (entityName: string, fetchXml: string, swimLaneSo
     }, options?.hideEmptyLanes ? [] : lanes.map(l => ({ option: l, data: [] })) as Array<BoardLane>);
 };
 
+export const fetchSubscriptions = async () => {
+  const { value: data } = await WebApiClient.Retrieve({
+    entityName: "oss_subscription",
+    queryParams: `?$filter=_ownerid_value eq ${Xrm.Page.context.getUserId().replace("{", "").replace("}", "")}&$orderby=createdon desc`,
+    returnAllPages: true
+  });
+
+  return data;
+};
+
+export const fetchNotifications = async () => {
+  const { value: data } = await WebApiClient.Retrieve({
+    entityName: "oss_notification",
+    queryParams: `?$filter=_ownerid_value eq ${Xrm.Page.context.getUserId().replace("{", "").replace("}", "")}&$orderby=createdon desc`,
+    returnAllPages: true
+  });
+
+  return data;
+};
+
 export const refresh = async (appDispatch: Dispatch, appState: AppStateProps, fetchXml?: string, selectedForm?: CardForm, secondaryFetchXml?: string, secondarySelectedForm?: CardForm) => {
   appDispatch({ type: "setProgressText", payload: "Fetching data" });
 
