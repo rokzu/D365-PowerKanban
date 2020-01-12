@@ -159,8 +159,11 @@ export const Board = () => {
   };
 
   const newRecord = async () => {
-    await Xrm.Navigation.openForm({ entityName: appState.config.entityName, useQuickCreateForm: true }, undefined);
-    refresh(appDispatch, appState);
+    const result = await Xrm.Navigation.openForm({ entityName: appState.config.entityName, useQuickCreateForm: true }, undefined);
+
+    if (result && result.savedEntityReference) {
+      refresh(appDispatch, appState);
+    }
   };
 
   const setView = (event: any) => {

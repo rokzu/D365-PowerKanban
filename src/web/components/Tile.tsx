@@ -71,8 +71,11 @@ export const Tile = (props: TileProps) => {
             [`${parentLookup}name`]: props.data[props.metadata.PrimaryNameAttribute]
         };
 
-        await Xrm.Navigation.openForm({ entityName: appState.secondaryMetadata.LogicalName, useQuickCreateForm: true }, data);
-        refresh(appDispatch, appState);
+        const result = await Xrm.Navigation.openForm({ entityName: appState.secondaryMetadata.LogicalName, useQuickCreateForm: true }, data);
+
+        if (result && result.savedEntityReference) {
+            refresh(appDispatch, appState);
+        }
     };
 
     return (
@@ -83,7 +86,7 @@ export const Tile = (props: TileProps) => {
                         { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                     <Button variant="outline-secondary" style={{float: "right", position: "absolute", top: "5px", right: "40px"}}><FontAwesomeIcon icon="bell" /></Button>
-                    <DropdownButton id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
+                    <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
                         <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
                         <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
                         { appState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {appState.secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
