@@ -265,7 +265,7 @@ export const Board = () => {
           </Nav>
           <Nav className="pull-right">
             <Button title="Work Indicator" disabled={!appState.workIndicator} variant="outline-primary">
-              <FontAwesomeIcon spin={!!appState.workIndicator} icon="cog" />
+              <FontAwesomeIcon spin={!!appState.workIndicator} icon="spinner" />
             </Button>
             { appState.config && appState.config.showCreateButton && <Button style={{marginLeft: "5px"}}  variant="outline-primary" onClick={newRecord}>Create New</Button> }
             <Button variant="outline-primary" style={{marginLeft: "5px"}} onClick={() => refresh(appDispatch, appState)}>

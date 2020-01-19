@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useAppContext, useAppDispatch, AppStateProps, Dispatch, DisplayType } from "../domain/AppState";
-import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup } from "react-bootstrap";
+import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, Image } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
 import { Metadata, Option } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
@@ -161,6 +161,7 @@ export const Tile = (props: TileProps) => {
                     </DropdownButton>
                 </Card.Header>
                 <Card.Body>
+                    <Image  />
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
                         { props.cardForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="body" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
