@@ -7,6 +7,7 @@ import { Metadata } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
 import { useDrop } from "react-dnd";
 import { ItemTypes } from "../domain/ItemTypes";
+import { Option } from "../domain/Metadata";
 
 interface LaneProps {
     lane: BoardLane;
@@ -24,6 +25,15 @@ export const Lane = (props: LaneProps) => {
         isOver: monitor.isOver(),
         canDrop: monitor.canDrop(),
       }),
+      canDrop: (item, monitor) => {
+        const typedItem = item as unknown as { id: string; sourceLane: Option } | undefined;
+
+        if (!typedItem.sourceLane._parsedTransitionData) {
+          return true;
+        }
+
+        return typedItem.sourceLane._parsedTransitionData.some(p => p.to === props.lane.option.Value);
+      }
     });
 
     const borderColor = props.lane.option.Color ?? "#3b79b7";

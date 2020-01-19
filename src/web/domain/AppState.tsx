@@ -77,6 +77,16 @@ const parseLinksFromFetch = (fetchXml: string): Array<{ entityName: string, alia
     return Array.from(xml.documentElement.getElementsByTagName("link-entity")).map(c => ({ entityName: c.getAttribute("name"), alias: c.getAttribute("alias")}));
 };
 
+const parseStateTransitions = (transitionXml: string): Array<{ source: number; to: number }> => {
+    if (!transitionXml) {
+        return undefined;
+    }
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(transitionXml, "application/xml");
+    return Array.from(xml.documentElement.getElementsByTagName("allowedtransition")).map(t => ({ source: parseInt(t.getAttribute("sourcestatusid")), to: parseInt(t.getAttribute("tostatusid"))} ));
+};
+
 function stateReducer(state: AppStateProps, action: Action): AppStateProps {
     switch (action.type) {
         case "setAppId": {
@@ -98,12 +108,19 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
             return { ...state, metadata: action.payload };
         }
         case "setSeparatorMetadata": {
+            if (action.payload?.OptionSet?.Options) {
+                action.payload.OptionSet.Options = action.payload.OptionSet.Options.map(o => ({...o, _parsedTransitionData: parseStateTransitions(o.TransitionData)}));
+            }
             return { ...state, separatorMetadata: action.payload };
         }
         case "setSecondaryMetadata": {
             return { ...state, secondaryMetadata: action.payload };
         }
         case "setSecondarySeparatorMetadata": {
+            if (action.payload?.OptionSet?.Options) {
+                action.payload.OptionSet.Options = action.payload.OptionSet.Options.map(o => ({...o, _parsedTransitionData: parseStateTransitions(o.TransitionData)}));
+            }
+
             return { ...state, secondarySeparatorMetadata: action.payload };
         }
         case "setStateMetadata": {

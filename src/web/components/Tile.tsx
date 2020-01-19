@@ -51,7 +51,7 @@ export const Tile = (props: TileProps) => {
         },
         collect: monitor => ({
           isDragging: monitor.isDragging(),
-        }),
+        })
     });
 
     const opacity = isDragging ? 0.4 : 1;

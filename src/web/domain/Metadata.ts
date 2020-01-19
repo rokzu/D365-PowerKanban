@@ -56,7 +56,8 @@ export interface Option {
     MetadataId?: any;
     HasChanged?: any;
     State: number;
-    TransitionData?: any;
+    TransitionData?: string;
+    _parsedTransitionData?: Array<{ source: number; to: number }>;
     Label: LabelCollection;
     Description: LabelCollection;
 }
