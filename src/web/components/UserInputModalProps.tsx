@@ -9,7 +9,7 @@ interface UserInputModalProps {
   finally?: () => void;
 }
 
-export default class UserInputModal extends React.PureComponent<UserInputModalProps, undefined> {
+export class UserInputModal extends React.PureComponent<UserInputModalProps, undefined> {
   constructor(props: UserInputModalProps) {
     super(props);
 

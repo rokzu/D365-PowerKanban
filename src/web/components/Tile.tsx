@@ -11,6 +11,7 @@ import { ItemTypes } from "../domain/ItemTypes";
 import { refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
 import WebApiClient from "xrm-webapi-client";
 import { useDrag, DragSourceMonitor } from "react-dnd";
+import { FlyOutForm } from "../domain/FlyOutForm";
 
 interface TileProps {
     data: any;
@@ -28,26 +29,59 @@ export const Tile = (props: TileProps) => {
     const [{ isDragging }, drag] = useDrag({
         item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile },
         end: (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
-            const dropResult = monitor.getDropResult();
+            const asyncEnd = async (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
+                const dropResult = monitor.getDropResult();
 
-            if (!dropResult || !dropResult?.option?.Value || dropResult.option.Value === item.sourceLane.Value) {
-                return;
-            }
+                if (!dropResult || !dropResult?.option?.Value || dropResult.option.Value === item.sourceLane.Value) {
+                    return;
+                }
 
-            appDispatch({ type: "setWorkIndicator", payload: true });
-            const itemId = item.id;
-            const targetOption = dropResult.option as Option;
-            const update: any = { [appState.separatorMetadata.LogicalName]: targetOption.Value };
+                let preventDefault = true;
 
-            if (appState.separatorMetadata.LogicalName === "statuscode") {
-                update["statecode"] = targetOption.State;
-            }
+                if (appState.config.transitionCallback) {
+                    const context = {
+                        showForm: (form: FlyOutForm) => {
+                            appDispatch({ type: "setFlyOutForm", payload: form });
+                            return Promise.resolve(undefined);
+                        },
+                        data: props.data,
+                        target: dropResult.option,
+                        WebApiClient: WebApiClient
+                    };
 
-            WebApiClient.Update({ entityName: props.metadata.LogicalName, entityId: itemId, entity: update })
-            .then((r: any) => {
-                appDispatch({ type: "setWorkIndicator", payload: false });
-                return refresh(appDispatch, appState);
-            });
+                    const path = appState.config.transitionCallback.split(".");
+                    const funcRef = path.reduce((all, cur) => !all ? undefined : (all as any)[cur], window);
+
+                    const result = await Promise.resolve(funcRef(context));
+                    preventDefault = result?.preventDefault;
+                }
+
+                if (preventDefault) {
+                    appDispatch({ type: "setWorkIndicator", payload: false });
+                    await refresh(appDispatch, appState);
+                }
+                else {
+                    appDispatch({ type: "setWorkIndicator", payload: true });
+                    const itemId = item.id;
+                    const targetOption = dropResult.option as Option;
+                    const update: any = { [appState.separatorMetadata.LogicalName]: targetOption.Value };
+
+                    if (appState.separatorMetadata.LogicalName === "statuscode") {
+                        update["statecode"] = targetOption.State;
+                    }
+
+                    WebApiClient.Update({ entityName: props.metadata.LogicalName, entityId: itemId, entity: update })
+                    .then((r: any) => {
+                        appDispatch({ type: "setWorkIndicator", payload: false });
+                        return refresh(appDispatch, appState);
+                    })
+                    .catch((e: any) => {
+                        appDispatch({ type: "setWorkIndicator", payload: false });
+                    });
+                }
+            };
+
+            asyncEnd(item, monitor);
         },
         collect: monitor => ({
           isDragging: monitor.isDragging(),

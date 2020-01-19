@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl } from "react-bootstrap";
+import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl, Badge } from "react-bootstrap";
 import WebApiClient from "xrm-webapi-client";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
-import UserInputModal from "./UserInputModalProps";
+import { UserInputModal } from "./UserInputModalProps";
 import { useAppContext } from "../domain/AppState";
 import { formatGuid } from "../domain/GuidFormatter";
 import { Lane } from "./Lane";
@@ -13,6 +13,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { fetchData, refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
 import { Tile } from "./Tile";
 import { DndContainer } from "./DndContainer";
+import { loadExternalScript } from "../domain/LoadExternalScript";
 
 const determineAttributeUrl = (attribute: Attribute) => {
   if (attribute.AttributeType === "Picklist") {
@@ -77,6 +78,11 @@ export const Board = () => {
       appDispatch({ type: "setProgressText", payload: "Fetching configuration" });
 
       const config = await fetchConfig(user.oss_defaultboardid);
+
+      if (config.customScriptUrl) {
+        appDispatch({ type: "setProgressText", payload: "Loading custom scripts" });
+        await loadExternalScript(config.customScriptUrl);
+      }
 
       appDispatch({ type: "setProgressText", payload: "Fetching meta data" });
 
@@ -237,7 +243,7 @@ export const Board = () => {
       <Navbar bg="light" variant="light" fixed="top">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
-            <DropdownButton variant="outline-primary" id="viewSelector" title={appState.selectedView?.name ?? "Select view"}>
+            <DropdownButton variant="outline-primary" id="viewSelector" title={<>{appState.selectedView?.name} <Badge variant="primary">{appState?.boardData?.reduce((count, l) => count + l.data.length, 0)}</Badge></> ?? "Select view"}>
               { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
             </DropdownButton>
             <DropdownButton variant="outline-primary" id="formSelector" title={appState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>

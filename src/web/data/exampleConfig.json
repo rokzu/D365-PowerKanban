@@ -1,0 +1,16 @@
+{
+    "entityName": "incident",
+    "defaultViewId": "",
+    "showCreateButton": true,
+    "swimLaneSource": "statuscode",
+    "allowTransitions": true,
+    "showDeleteButton": true,
+    "showDeactivateButton": true,
+    "secondaryEntity": {
+             "logicalName": "task",
+             "parentLookup": "regardingobjectid",
+             "swimLaneSource": "statuscode"
+    },
+    "customScriptUrl": "/WebResources/oss_/D365BoardView/js/exampleExternalScript.js",
+    "transitionCallback": "boardViewExtender.onStateTransition"
+}
