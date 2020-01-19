@@ -1,5 +1,4 @@
 const path = require("path");
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
     mode: "production",
@@ -15,10 +14,6 @@ module.exports = {
     optimization: {
         minimize: false
     },
-
-    plugins: [
-        new BundleAnalyzerPlugin()
-    ],
 
     // Enable sourcemaps for debugging webpack"s output.
     devtool: "inline-source-map",
