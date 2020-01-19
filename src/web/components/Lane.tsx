@@ -29,16 +29,16 @@ export const Lane = (props: LaneProps) => {
     const borderColor = props.lane.option.Color ?? "#3b79b7";
 
     const isActive = canDrop && isOver;
-    let backgroundColor = "#efefef";
+    let style: React.CSSProperties = { };
 
     if (isActive) {
-      backgroundColor = "darkgreen";
+      style = { borderWidth: "3px", borderStyle: "dashed", borderColor: "#02f01c" };
     } else if (canDrop) {
-      backgroundColor = "darkkhaki";
+      style = { borderWidth: "3px", borderStyle: "dashed", borderColor: "#3b79b7" };
     }
 
     return (
-        <div ref={drop} style={{ backgroundColor, minWidth: props.minWidth ?? "400px", margin: "5px", flex: "1 1 0" }}>
+        <div ref={drop} style={{ ...style, minWidth: props.minWidth ?? "400px", margin: "5px", flex: "1 1 0" }}>
             <Card style={{borderColor: "#d8d8d8", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
                 <Card.Body>
                     <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>

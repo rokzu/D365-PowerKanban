@@ -1,8 +1,9 @@
 import React from "react";
 import { Modal, ProgressBar } from "react-bootstrap";
-import { useAppContext } from "../domain/AppState";
+import { useAppContext, DisplayType } from "../domain/AppState";
 import { Board } from "./Board";
 import { SideBySideForm } from "./SideBySideForm";
+import { NotificationList } from "./NotificationList";
 
 interface SplitViewProps { }
 
@@ -27,10 +28,15 @@ export const SplitView = (props: SplitViewProps) => {
             <div style={appState.selectedRecord ? { minWidth: "600px", resize: "horizontal", overflow: "auto"} : { width: "100%" }}>
                 <Board />
             </div>
-            { !!appState.selectedRecord &&
-            <div style={{minWidth: "400px", borderLeft: "1px solid", flex: "1 1 0" }}>
-                <SideBySideForm />
-            </div>
+            { !!appState.selectedRecord && appState.selectedRecordDisplayType === DisplayType.recordForm &&
+                <div style={{minWidth: "400px", borderLeft: "1px solid", flex: "1 1 0" }}>
+                    <SideBySideForm />
+                </div>
+            }
+            { !!appState.selectedRecord && appState.selectedRecordDisplayType === DisplayType.notifications &&
+                <div style={{minWidth: "400px", borderLeft: "1px solid", flex: "1 1 0" }}>
+                    <NotificationList />
+                </div>
             }
         </div>
         </>

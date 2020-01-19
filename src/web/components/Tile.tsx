@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useAppContext, useAppDispatch, AppStateProps, Dispatch } from "../domain/AppState";
+import { useAppContext, useAppDispatch, AppStateProps, Dispatch, DisplayType } from "../domain/AppState";
 import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
 import { Metadata, Option } from "../domain/Metadata";
@@ -30,7 +30,7 @@ export const Tile = (props: TileProps) => {
         end: (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
             const dropResult = monitor.getDropResult();
 
-            if (!dropResult || !dropResult?.option?.Value) {
+            if (!dropResult || !dropResult?.option?.Value || dropResult.option.Value === item.sourceLane.Value) {
                 return;
             }
 
@@ -57,6 +57,12 @@ export const Tile = (props: TileProps) => {
     const opacity = isDragging ? 0.4 : 1;
 
     const setSelectedRecord = () => {
+        appDispatch({ type: "setSelectedRecordDisplayType", payload: DisplayType.recordForm });
+        appDispatch({ type: "setSelectedRecord", payload: { entityType: props.metadata.LogicalName, id: props.data[props.metadata?.PrimaryIdAttribute] } });
+    };
+
+    const showNotifications = () => {
+        appDispatch({ type: "setSelectedRecordDisplayType", payload: DisplayType.notifications });
         appDispatch({ type: "setSelectedRecord", payload: { entityType: props.metadata.LogicalName, id: props.data[props.metadata?.PrimaryIdAttribute] } });
     };
 
@@ -145,6 +151,7 @@ export const Tile = (props: TileProps) => {
                             <Dropdown.Item as="button" onClick={subscribe}><FontAwesomeIcon icon="bell" /> Subscribe</Dropdown.Item>
                             <Dropdown.Item as="button" onClick={unsubscribe}><FontAwesomeIcon icon="bell-slash" /> Unsubscribe</Dropdown.Item>
                             <Dropdown.Item as="button" onClick={clearNotifications}><FontAwesomeIcon icon="eye-slash" /> Mark as read</Dropdown.Item>
+                            <Dropdown.Item as="button" onClick={showNotifications}><FontAwesomeIcon icon="eye" /> Show notifications</Dropdown.Item>
                         </Dropdown.Menu>
                     </Dropdown>
                     <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>

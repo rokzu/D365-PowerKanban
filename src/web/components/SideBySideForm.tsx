@@ -12,14 +12,14 @@ export const SideBySideForm = (props: FormProps) => {
 
   const _iframe = useRef(undefined);
 
-  useEffect(() => {
+  const hideNav = () => {
     const style = document.createElement("style");
     style.type = "text/css";
 
-    style.appendChild(document.createTextNode(`#id-5 { display: hidden; } [data-id="topBar"] { display: hidden; }`));
+    style.appendChild(document.createTextNode(`#id-5 { display: none; } [data-id="topBar"] { display: none; }`));
 
     _iframe.current.contentWindow.document.head.append(style);
-  }, []);
+  };
 
   const closeSideBySide = () => {
     appDispatch({ type: "setSelectedRecord", payload: undefined });
@@ -46,7 +46,7 @@ export const SideBySideForm = (props: FormProps) => {
         <Button onClick={closeSideBySide} style={{ position: "absolute", top: "45%", left: "-18px" }}><FontAwesomeIcon icon="window-close" /></Button>
         <Button onClick={closeAndRefresh} style={{ position: "absolute", top: "50%", left: "-18px" }}><FontAwesomeIcon icon="sync" /></Button>
         <Button onClick={openInNewTab} style={{ position: "absolute", top: "55%", left: "-18px" }}><FontAwesomeIcon icon="window-maximize" /></Button>
-        <iframe ref={_iframe} style={{width: "100%", height: "100%", border: 0}} src={`/main.aspx?appid=${appState.appId}&pagetype=entityrecord&etn=${appState.selectedRecord.entityType}&id=${appState.selectedRecord.id}`}></iframe>
+        <iframe onLoad={hideNav} ref={_iframe} style={{width: "100%", height: "100%", border: 0}} src={`/main.aspx?appid=${appState.appId}&pagetype=entityrecord&etn=${appState.selectedRecord.entityType}&id=${appState.selectedRecord.id}`}></iframe>
       </div>
   );
 };

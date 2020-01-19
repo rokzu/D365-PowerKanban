@@ -8,6 +8,11 @@ import { CardForm } from "./CardForm";
 import { Subscription } from "./Subscription";
 import { Notification } from "./Notification";
 
+export enum DisplayType {
+    recordForm,
+    notifications
+}
+
 type Action = { type: "setAppId", payload: string }
     | { type: "setConfigId", payload: string }
     | { type: "setConfig", payload: BoardViewConfig }
@@ -26,7 +31,8 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setProgressText", payload: string }
     | { type: "setSubscriptions", payload: Array<Subscription>}
     | { type: "setNotifications", payload: Array<Notification>}
-    | { type: "setWorkIndicator", payload: boolean};
+    | { type: "setWorkIndicator", payload: boolean}
+    | { type: "setSelectedRecordDisplayType", payload: DisplayType };
 
 export type Dispatch = (action: Action) => void;
 
@@ -52,6 +58,7 @@ export type AppStateProps = {
     subscriptions?: Array<Subscription>;
     notifications?: Array<Notification>;
     workIndicator?: boolean;
+    selectedRecordDisplayType?: DisplayType;
 };
 
 type AppContextProps = {
@@ -128,6 +135,9 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         }
         case "setWorkIndicator": {
             return { ...state, workIndicator: action.payload };
+        }
+        case "setSelectedRecordDisplayType": {
+            return { ...state, selectedRecordDisplayType: action.payload };
         }
     }
 }
