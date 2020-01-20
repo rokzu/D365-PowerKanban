@@ -22,7 +22,9 @@ window.boardViewExtender.onStateTransition = function(context) {
             },
             "description": {
                 label: "Description",
-                type: "textarea",
+                type: "text",
+                as: "textarea",
+                rows: 5,
                 required: true,
                 subtext: "Please describe how the case was solved"
             }

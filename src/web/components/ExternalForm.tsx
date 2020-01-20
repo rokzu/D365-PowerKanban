@@ -41,7 +41,7 @@ export const ExternalForm = (props: ExternalFormProps) => {
             {Object.keys(appState.flyOutForm.fields).map(fieldId =>
                 <Form.Group key={fieldId} controlId={fieldId}>
                     <Form.Label>{appState.flyOutForm.fields[fieldId].label}{appState.flyOutForm.fields[fieldId].required && <span style={{color: "red"}}>*</span>}</Form.Label>
-                    <Form.Control value={formData[fieldId]} onChange={onFieldChange} type={appState.flyOutForm.fields[fieldId].type} placeholder={appState.flyOutForm.fields[fieldId].placeholder ?? `Enter ${[appState.flyOutForm.fields[fieldId].label]}`} />
+                    <Form.Control value={formData[fieldId]} onChange={onFieldChange} as={appState.flyOutForm.fields[fieldId].as} rows={appState.flyOutForm.fields[fieldId].rows} type={appState.flyOutForm.fields[fieldId].type} placeholder={appState.flyOutForm.fields[fieldId].placeholder ?? `Enter ${[appState.flyOutForm.fields[fieldId].label]}`} />
                     { appState.flyOutForm.fields[fieldId].subtext &&
                         <Form.Text className="text-muted">
                             { appState.flyOutForm.fields[fieldId].subtext }

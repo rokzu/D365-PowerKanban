@@ -4,11 +4,13 @@ export interface FlyOutFormResult {
 }
 
 export interface FlyOutField {
-    type: string;
+    type?: string;
     label: string;
     placeholder?: string;
     subtext?: string;
     required?: boolean;
+    rows?: number;
+    as?: any;
 }
 
 export interface FlyOutForm {
