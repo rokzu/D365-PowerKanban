@@ -1,7 +1,7 @@
 window.boardViewExtender = {};
 
 window.boardViewExtender.onStateTransition = function(context) {
-    if (context.target.Value !== 5) {
+    if (![5, 1000].includes(context.target.Value)) {
         return;
     }
     
@@ -40,7 +40,7 @@ window.boardViewExtender.onStateTransition = function(context) {
                         timespent: formResult.values.timespent,
                         description: formResult.values.description
                     },
-                    Status: -1
+                    Status: context.target.Value
                 }
             });
 
