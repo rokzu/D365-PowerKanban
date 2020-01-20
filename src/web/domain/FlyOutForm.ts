@@ -1,11 +1,19 @@
 export interface FlyOutFormResult {
-    canceled: boolean;
-    values: any;
+    cancelled: boolean;
+    values?: any;
+}
+
+export interface FlyOutField {
+    type: string;
+    label: string;
+    placeholder?: string;
+    subtext?: string;
+    required?: boolean;
 }
 
 export interface FlyOutForm {
     title: string;
-    fields: any;
+    fields: {[key: string]: FlyOutField };
     resolve: (result: FlyOutFormResult) => void;
     reject: (e: Error) => void;
 }

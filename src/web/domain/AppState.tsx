@@ -7,6 +7,7 @@ import { SavedQuery } from "./SavedQuery";
 import { CardForm } from "./CardForm";
 import { Subscription } from "./Subscription";
 import { Notification } from "./Notification";
+import { FlyOutForm } from "./FlyOutForm";
 
 export enum DisplayType {
     recordForm,
@@ -33,7 +34,7 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setNotifications", payload: Array<Notification>}
     | { type: "setWorkIndicator", payload: boolean}
     | { type: "setSelectedRecordDisplayType", payload: DisplayType }
-    | { type: "setFlyOutForm", payload: any };
+    | { type: "setFlyOutForm", payload: FlyOutForm };
 
 export type Dispatch = (action: Action) => void;
 
@@ -60,7 +61,7 @@ export type AppStateProps = {
     notifications?: Array<Notification>;
     workIndicator?: boolean;
     selectedRecordDisplayType?: DisplayType;
-    flyOutForm?: any;
+    flyOutForm?: FlyOutForm;
 };
 
 type AppContextProps = {

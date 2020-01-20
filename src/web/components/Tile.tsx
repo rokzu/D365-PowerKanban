@@ -41,8 +41,12 @@ export const Tile = (props: TileProps) => {
                 if (appState.config.transitionCallback) {
                     const context = {
                         showForm: (form: FlyOutForm) => {
-                            appDispatch({ type: "setFlyOutForm", payload: form });
-                            return Promise.resolve(undefined);
+                            return new Promise((resolve, reject) => {
+                                form.resolve = resolve;
+                                form.reject = reject;
+
+                                appDispatch({ type: "setFlyOutForm", payload: form });
+                            });
                         },
                         data: props.data,
                         target: dropResult.option,

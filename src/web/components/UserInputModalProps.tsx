@@ -7,6 +7,7 @@ interface UserInputModalProps {
   yesCallBack?: (value: string) => void;
   noCallBack?: () => void;
   finally?: () => void;
+  okButtonDisabled?: boolean;
 }
 
 export class UserInputModal extends React.PureComponent<UserInputModalProps, undefined> {
@@ -55,7 +56,7 @@ export class UserInputModal extends React.PureComponent<UserInputModalProps, und
           </Modal.Body>
 
           <Modal.Footer>
-            <Button onClick={ () => this.triggerCallback(true) } variant="primary">Ok</Button>
+            <Button onClick={ () => this.triggerCallback(true) } disabled={this.props.okButtonDisabled} variant="primary">Ok</Button>
             <Button onClick={ () => this.triggerCallback(false) } variant="secondary">Cancel</Button>
           </Modal.Footer>
         </Modal>);

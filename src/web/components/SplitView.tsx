@@ -5,6 +5,7 @@ import { Board } from "./Board";
 import { SideBySideForm } from "./SideBySideForm";
 import { NotificationList } from "./NotificationList";
 import { UserInputModal } from "./UserInputModalProps";
+import { ExternalForm } from "./ExternalForm";
 
 interface SplitViewProps { }
 
@@ -25,8 +26,7 @@ export const SplitView = (props: SplitViewProps) => {
                 </div>
             </Modal.Body>
         </Modal>
-        <UserInputModal title={appState.flyOutForm?.title} show={!!appState.flyOutForm}>
-        </UserInputModal>
+        { appState.flyOutForm && <ExternalForm /> }
         <div style={{display: "flex", width: "100%", height: "100%", backgroundColor: "#efefef", paddingTop: "50px"}}>
             <div style={appState.selectedRecord ? { minWidth: "600px", resize: "horizontal", overflow: "auto"} : { width: "100%" }}>
                 <Board />
