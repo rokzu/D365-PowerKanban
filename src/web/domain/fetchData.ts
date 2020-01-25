@@ -8,7 +8,7 @@ import { OperationalError } from "bluebird";
 
 const getFieldsFromSegment = (segment: CardSegment): Array<string> => segment.rows.reduce((all, curr) => [...all, ...curr.cells.map(c => c.field)], []);
 
-export const fetchData = async (entityName: string, fetchXml: string, swimLaneSource: string, form: CardForm, metadata: Metadata, attribute: Attribute, options?: { additionalFields?: Array<string>, hideEmptyLanes?: boolean; additionalConditions?: Array<{attribute: string; operator: string; values?: Array<string>;}> }): Promise<Array<BoardLane>> => {
+export const fetchData = async (entityName: string, fetchXml: string, swimLaneSource: string, form: CardForm, metadata: Metadata, attribute: Attribute, options?: { additionalFields?: Array<string>, hideEmptyLanes?: boolean; additionalConditions?: Array<{ attribute: string; operator: string; values?: Array<string>; }> }): Promise<Array<BoardLane>> => {
   try {
     const formFields = Array.from(new Set([...getFieldsFromSegment(form.parsed.header), ...getFieldsFromSegment(form.parsed.body), ...getFieldsFromSegment(form.parsed.footer)]));
 

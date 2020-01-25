@@ -24,7 +24,7 @@ interface TileProps {
     dndType?: string;
 }
 
-export const Tile = (props: TileProps) => {
+const TileRender = (props: TileProps) => {
     const [appState, appDispatch] = useAppContext();
     const [{ isDragging }, drag] = useDrag({
         item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile },
@@ -224,3 +224,5 @@ export const Tile = (props: TileProps) => {
         </div>
     );
 };
+
+export const Tile = React.memo(TileRender);

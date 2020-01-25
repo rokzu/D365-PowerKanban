@@ -17,7 +17,7 @@ interface LaneProps {
     dndType?: string;
 }
 
-export const Lane = (props: LaneProps) => {
+const LaneRender = (props: LaneProps) => {
     const [{ canDrop, isOver }, drop] = useDrop({
       accept: props.dndType ?? ItemTypes.Tile,
       drop: () => ({ option: props.lane.option }),
@@ -58,3 +58,5 @@ export const Lane = (props: LaneProps) => {
         </div>
     );
 };
+
+export const Lane = React.memo(LaneRender);
