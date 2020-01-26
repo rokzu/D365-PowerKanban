@@ -22,11 +22,12 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setSecondaryData", payload: Array<any> }
     | { type: "setMetadata", payload: Metadata }
     | { type: "setSeparatorMetadata", payload: Attribute }
-    | { type: "setSecondaryMetadata", payload: Metadata }
+    | { type: "setSecondaryMetadata", payload: { entity: string; data: Metadata } }
     | { type: "setSecondarySeparatorMetadata", payload: Attribute }
     | { type: "setStateMetadata", payload: Attribute }
     | { type: "setSelectedView", payload: SavedQuery }
     | { type: "setSelectedForm", payload: CardForm }
+    | { type: "setNotificationForm", payload: CardForm }
     | { type: "setSelectedSecondaryView", payload: SavedQuery }
     | { type: "setSelectedSecondaryForm", payload: CardForm }
     | { type: "setProgressText", payload: string }
@@ -44,9 +45,10 @@ export type AppStateProps = {
     progressText?: string;
     config?: BoardViewConfig;
     metadata?: Metadata;
-    secondaryMetadata?: Metadata;
+    secondaryMetadata?: {[key: string]: Metadata};
     selectedView?: SavedQuery;
     selectedForm?: CardForm;
+    notificationForm?: CardForm;
     selectedViewData?: { columns: Array<string>; linkEntities: Array<{ entityName: string, alias: string }> }
     selectedSecondaryView?: SavedQuery;
     selectedSecondaryForm?: CardForm;
@@ -54,7 +56,7 @@ export type AppStateProps = {
     separatorMetadata?: Attribute;
     secondarySeparatorMetadata?: Attribute;
     stateMetadata?: Attribute;
-    selectedRecord?: { entityType: string, id: string, name?: string };
+    selectedRecord?: Xrm.LookupValue;
     boardData?: Array<BoardLane>;
     secondaryData?: Array<BoardLane>;
     subscriptions?: Array<Subscription>;
@@ -117,7 +119,7 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
             return { ...state, separatorMetadata: action.payload };
         }
         case "setSecondaryMetadata": {
-            return { ...state, secondaryMetadata: action.payload };
+            return { ...state, secondaryMetadata: {...state.secondaryMetadata, [action.payload.entity]: action.payload.data } };
         }
         case "setSecondarySeparatorMetadata": {
             if (action.payload?.OptionSet?.Options) {
@@ -134,6 +136,9 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         }
         case "setSelectedForm": {
             return { ...state, selectedForm: action.payload };
+        }
+        case "setNotificationForm": {
+            return { ...state, notificationForm: action.payload };
         }
         case "setSelectedSecondaryView": {
             return { ...state, selectedSecondaryView: action.payload, selectedSecondaryViewData: { columns: parseLayoutColumns(action.payload.layoutxml), linkEntities: parseLinksFromFetch(action.payload.fetchxml) } };

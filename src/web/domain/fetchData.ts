@@ -5,6 +5,7 @@ import WebApiClient from "xrm-webapi-client";
 import { CardForm, CardSegment } from "./CardForm";
 import { Dispatch, AppStateProps } from "./AppState";
 import { OperationalError } from "bluebird";
+import { Notification } from "../domain/Notification";
 
 const getFieldsFromSegment = (segment: CardSegment): Array<string> => segment.rows.reduce((all, curr) => [...all, ...curr.cells.map(c => c.field)], []);
 
@@ -152,10 +153,11 @@ export const fetchNotifications = async () => {
   const { value: data } = await WebApiClient.Retrieve({
     entityName: "oss_notification",
     queryParams: `?$filter=_ownerid_value eq ${Xrm.Page.context.getUserId().replace("{", "").replace("}", "")}&$orderby=createdon desc`,
-    returnAllPages: true
+    returnAllPages: true,
+    headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ]
   });
 
-  return data;
+  return data.map((d: Notification) => ({...d, parsed: d.oss_data ? JSON.parse(d.oss_data) : undefined }));
 };
 
 export const refresh = async (appDispatch: Dispatch, appState: AppStateProps, fetchXml?: string, selectedForm?: CardForm, secondaryFetchXml?: string, secondarySelectedForm?: CardForm) => {
@@ -175,7 +177,7 @@ export const refresh = async (appDispatch: Dispatch, appState: AppStateProps, fe
       secondaryFetchXml ?? appState.selectedSecondaryView.fetchxml,
       appState.config.secondaryEntity.swimLaneSource,
       secondarySelectedForm ?? appState.selectedSecondaryForm,
-      appState.secondaryMetadata,
+      appState.secondaryMetadata[appState.config.secondaryEntity.logicalName],
       appState.secondarySeparatorMetadata,
       {
         additionalFields: [
@@ -192,6 +194,10 @@ export const refresh = async (appDispatch: Dispatch, appState: AppStateProps, fe
     );
 
     appDispatch({ type: "setSecondaryData", payload: secondaryData });
+
+    appDispatch({ type: "setProgressText", payload: "Fetching notifications" });
+    const notifications = await fetchNotifications();
+    appDispatch({ type: "setNotifications", payload: notifications });
   }
   catch (e) {
     Xrm.Utility.alertDialog(e?.message ?? e, () => {});

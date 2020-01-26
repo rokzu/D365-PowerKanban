@@ -91,6 +91,9 @@ export const Board = () => {
         const attributeMetadata = await fetchSeparatorMetadata(config.entityName, config.swimLaneSource, metadata);
         const stateMetadata = await fetchSeparatorMetadata(config.entityName, "statecode", metadata);
 
+        const notificationMetadata = await fetchMetadata("oss_notification");
+        appDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
+
         let secondaryMetadata: Metadata;
         let secondaryAttributeMetadata: Attribute;
 
@@ -98,7 +101,7 @@ export const Board = () => {
           secondaryMetadata = await fetchMetadata(config.secondaryEntity.logicalName);
           secondaryAttributeMetadata = await fetchSeparatorMetadata(config.secondaryEntity.logicalName, config.secondaryEntity.swimLaneSource, secondaryMetadata);
 
-          appDispatch({ type: "setSecondaryMetadata", payload: secondaryMetadata });
+          appDispatch({ type: "setSecondaryMetadata", payload: { entity: config.secondaryEntity.logicalName, data: secondaryMetadata } });
           appDispatch({ type: "setSecondarySeparatorMetadata", payload: secondaryAttributeMetadata });
         }
 
@@ -128,6 +131,10 @@ export const Board = () => {
         const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.entityName}' and type eq 11`});
         const processedForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
         setCardForms(processedForms);
+
+        const { value: notificationForms } = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq 'oss_notification' and type eq 11`});
+        const processedNotificationForms = notificationForms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
+        appDispatch({ type: "setNotificationForm", payload: processedNotificationForms[0] });
 
         let defaultSecondaryForm;
         if (config.secondaryEntity) {

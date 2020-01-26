@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useAppContext, useAppDispatch, AppStateProps, Dispatch, DisplayType } from "../domain/AppState";
-import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, Image } from "react-bootstrap";
+import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, Image, Badge } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
 import { Metadata, Option } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
@@ -26,6 +26,8 @@ interface TileProps {
 
 const TileRender = (props: TileProps) => {
     const [appState, appDispatch] = useAppContext();
+    const secondaryMetadata = appState.secondaryMetadata[appState.config.secondaryEntity.logicalName];
+
     const [{ isDragging }, drag] = useDrag({
         item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile },
         end: (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
@@ -116,7 +118,7 @@ const TileRender = (props: TileProps) => {
             [`${parentLookup}name`]: props.data[props.metadata.PrimaryNameAttribute]
         };
 
-        const result = await Xrm.Navigation.openForm({ entityName: appState.secondaryMetadata.LogicalName, useQuickCreateForm: true }, data);
+        const result = await Xrm.Navigation.openForm({ entityName: secondaryMetadata.LogicalName, useQuickCreateForm: true }, data);
 
         if (result && result.savedEntityReference) {
             refresh(appDispatch, appState);
@@ -171,7 +173,7 @@ const TileRender = (props: TileProps) => {
     };
 
     const notifications = appState.notifications.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
-    const bellStyle = notifications.length > 0 ? { color: "red" } : {};
+    const isSubscribed = appState.subscriptions.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
 
     return (
         <div ref={drag}>
@@ -181,8 +183,10 @@ const TileRender = (props: TileProps) => {
                         { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                     <Dropdown as={ButtonGroup} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}>
-                        <Button style={bellStyle} variant="outline-secondary">
-                            { appState.subscriptions.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]) ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" /> }
+                        <Button onClick={showNotifications} variant="outline-secondary">
+                            {
+                            <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { notifications.length > 0 && <Badge variant="danger">{notifications.length}</Badge> }</span>
+                            }
                         </Button>
                         <Dropdown.Toggle split variant="outline-secondary" id="dropdown-split-basic" />
                         <Dropdown.Menu>
@@ -195,7 +199,7 @@ const TileRender = (props: TileProps) => {
                     <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
                         <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
                         <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
-                        { appState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {appState.secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
+                        { appState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
                     </DropdownButton>
                 </Card.Header>
                 <Card.Body>
@@ -206,11 +210,11 @@ const TileRender = (props: TileProps) => {
                     { props.secondaryData &&
                     <div>
                         <span style={{marginLeft: "5px", fontSize: "larger"}}>
-                            {appState.secondaryMetadata.DisplayCollectionName.UserLocalizedLabel.Label}
+                            {secondaryMetadata.DisplayCollectionName.UserLocalizedLabel.Label}
                         </span>
                         <Button style={{marginLeft: "5px"}} variant="outline-secondary" onClick={createNewSecondary}><FontAwesomeIcon icon="plus-square" /></Button>
                         <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "auto" }}>
-                            { props.secondaryData.map(d => <Lane dndType={`${ItemTypes.Tile}_${props.data[props.metadata.PrimaryIdAttribute]}`} key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px" cardForm={appState.selectedSecondaryForm} metadata={appState.secondaryMetadata} lane={d} />) }
+                            { props.secondaryData.map(d => <Lane dndType={`${ItemTypes.Tile}_${props.data[props.metadata.PrimaryIdAttribute]}`} key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px" cardForm={appState.selectedSecondaryForm} metadata={secondaryMetadata} lane={d} />) }
                         </div>
                     </div>
                     }

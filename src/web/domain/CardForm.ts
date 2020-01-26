@@ -5,7 +5,7 @@ interface FieldLabel {
 
 export interface CardCell {
     field: string;
-    labels: Array<FieldLabel>;
+    labels?: Array<FieldLabel>;
 }
 
 interface CardRow {

@@ -33,10 +33,13 @@ export const FieldRow = (props: FieldRowProps) => {
         return props.data[fieldName];
     };
 
+    // tslint:disable-next-line: no-null-keyword
+    const rows = props.cells.map(c => [c, getData(c.field)]).filter(([c, data]) => data != null && data != "");
+
     if (props.type === "header") {
         return (
             <div style={{ display: "flex", flexDirection: "row" }}>
-                { props.cells.map((c, i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ getData(c.field) }</div>) }
+                { rows.map(([c, data], i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ data }</div>) }
             </div>
         );
     }
@@ -44,14 +47,7 @@ export const FieldRow = (props: FieldRowProps) => {
     if (props.type === "footer") {
         return (
             <div style={{ display: "flex", flexDirection: "column" }}>
-                { props.cells.map((c, i) => {
-                    const data = getData(c.field);
-
-                    // tslint:disable-next-line: no-null-keyword
-                    if (data == null || data == "") {
-                        return (<div key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}></div>);
-                    }
-
+                { rows.map(([c, data], i) => {
                     return (<div key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }<span style={{float: "right", color: "#666666"}}>{props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label}</span></div>);
                  })
                 }
@@ -61,7 +57,7 @@ export const FieldRow = (props: FieldRowProps) => {
 
     return (
         <div style={{ display: "flex", flexDirection: "column" }}>
-            { props.cells.map((c, i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ getData(c.field) }</div>) }
+            { rows.map(([c, data], i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }</div>) }
         </div>
     );
 };

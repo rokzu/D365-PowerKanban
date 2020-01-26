@@ -14,6 +14,7 @@ export interface Context {
 export interface BoardViewConfig {
     entityName: string;
     defaultViewId: string;
+    notificationCardFormId: string;
     showCreateButton: boolean;
     swimLaneSource: string;
     allowTransitions: boolean;

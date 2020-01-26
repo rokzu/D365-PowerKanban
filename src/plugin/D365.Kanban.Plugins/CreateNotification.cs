@@ -91,7 +91,7 @@ namespace D365.Kanban.Plugins
             var context = serviceProvider.GetService(typeof(IPluginExecutionContext)) as IPluginExecutionContext;
             var crmTracing = serviceProvider.GetService(typeof(ITracingService)) as ITracingService;
             var serviceFactory = serviceProvider.GetService(typeof(IOrganizationServiceFactory)) as IOrganizationServiceFactory;
-            var service = serviceFactory.CreateOrganizationService(null);
+            var service = serviceFactory.CreateOrganizationService(context.UserId);
 
             var target = GetTarget(context);
             var targetRef = GetTargetRef(context);
