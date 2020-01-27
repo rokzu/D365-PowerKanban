@@ -2,12 +2,14 @@ import React, { useContext, useEffect, useState } from "react";
 import { Col, Card, Button } from "react-bootstrap";
 import { CardCell } from "../domain/CardForm";
 import { Metadata } from "../domain/Metadata";
+import { RegexEscape } from "../domain/RegexEscape";
 
 interface FieldRowProps {
     cells: Array<CardCell>;
     data: any;
     type: "header" | "footer" | "body";
     metadata: Metadata;
+    searchString?: string;
 }
 
 export const FieldRow = (props: FieldRowProps) => {
@@ -16,25 +18,38 @@ export const FieldRow = (props: FieldRowProps) => {
         Xrm.Navigation.openForm({ entityName: entity, entityId: id, openInNewWindow: true });
     };
 
-    const getData = (fieldName: string) => {
+    const highlightSearch = (text: string) => {
+        if (!props.searchString || !text) {
+            return text;
+        }
+
+        const substrings = text.split(new RegExp(`(${RegexEscape(props.searchString)})`, "gi"));
+        return (<span>
+            {
+                substrings.map((s, i) => (<span key={i} style={s.toLowerCase() === props.searchString.toLowerCase() ? { backgroundColor: "yellow" } : {}}>{s}</span>))
+            }
+        </span>);
+    };
+
+    const getData = (fieldName: string): React.ReactNode => {
         const formattedValue = props.data[`${fieldName}@OData.Community.Display.V1.FormattedValue`];
 
         if (formattedValue) {
-            return formattedValue;
+            return highlightSearch(formattedValue);
         }
 
         const lookupFormatted = props.data[`_${fieldName}_value@OData.Community.Display.V1.FormattedValue`];
 
         if (lookupFormatted) {
             const targetEntity = props.data[`_${fieldName}_value@Microsoft.Dynamics.CRM.lookuplogicalname`];
-            return (<Button style={{padding: "0px"}} id={`${targetEntity}_${props.data[`_${fieldName}_value`]}`} onClick={openRecord} variant="link">{lookupFormatted}</Button>);
+            return (<Button style={{padding: "0px"}} id={`${targetEntity}_${props.data[`_${fieldName}_value`]}`} onClick={openRecord} variant="link">{highlightSearch(lookupFormatted)}</Button>);
         }
 
-        return props.data[fieldName];
+        return highlightSearch(props.data[fieldName]);
     };
 
     // tslint:disable-next-line: no-null-keyword
-    const rows = props.cells.map(c => [c, getData(c.field)]).filter(([c, data]) => data != null && data != "");
+    const rows: Array<[CardCell, React.ReactNode]> = props.cells.map(c => [c, getData(c.field)] as [CardCell, React.ReactNode]).filter(([c, data]) => data != null && data != "");
 
     if (props.type === "header") {
         return (

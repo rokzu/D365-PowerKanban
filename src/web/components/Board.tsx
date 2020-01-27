@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl, Badge } from "react-bootstrap";
+import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl, Badge, InputGroup } from "react-bootstrap";
 import WebApiClient from "xrm-webapi-client";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
 import { UserInputModal } from "./UserInputModalProps";
@@ -66,6 +66,7 @@ export const Board = () => {
   const [ showDeletionVerification, setShowDeletionVerification ] = useState(false);
   const [ stateFilters, setStateFilters ]: [Array<Option>, (options: Array<Option>) => void] = useState([]);
   const [ displayState, setDisplayState ]: [DisplayState, (state: DisplayState) => void] = useState("simple" as any);
+  const [ searchText, setSearch] = useState("");
 
   useEffect(() => {
     async function initializeConfig() {
@@ -257,8 +258,28 @@ export const Board = () => {
     setDisplayState("advanced");
   };
 
-  const advancedData = displayState === "advanced" && appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).reduce((all, curr) => all.concat(curr.data.filter(d => appState.secondaryData.some(t => t.data.some(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute]))).map(d => <Tile borderColor={curr.option.Color ?? "#3b79b7"} cardForm={appState.selectedForm} metadata={appState.metadata} key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} style={{ margin: "5px" }} data={d} secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute])}))} />)), []);
-  const simpleData = appState.boardData && appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State)).map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} cardForm={appState.selectedForm} metadata={appState.metadata} lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] !== r[appState.metadata.PrimaryIdAttribute])))}} />);
+  const setSearchText = (e: any) => {
+    setSearch(e.target.value ?? "");
+  };
+
+  const search = () => {
+    appDispatch({type: "setSearchText", payload: searchText});
+  };
+
+  const onSearchKey = (e: any) => {
+    if (e.key === "Enter") {
+      search();
+    }
+  };
+
+  const advancedData = displayState === "advanced" && appState.boardData &&
+    appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State))
+    .map(d => !appState.searchText ? d : { ...d, data: d.data.filter(data => Object.keys(data).some(k => `${data[k]}`.toLowerCase().includes(appState.searchText.toLowerCase()))) })
+    .reduce((all, curr) => all.concat(curr.data.filter(d => appState.secondaryData.some(t => t.data.some(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute]))).map(d => <Tile borderColor={curr.option.Color ?? "#3b79b7"} cardForm={appState.selectedForm} metadata={appState.metadata} key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} style={{ margin: "5px" }} data={d} secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute])}))} />)), []);
+  const simpleData = appState.boardData && appState.boardData
+    .filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State))
+    .map(d => !appState.searchText ? d : { ...d, data: d.data.filter(data => Object.keys(data).some(k => `${data[k]}`.toLowerCase().includes(appState.searchText.toLowerCase()))) })
+    .map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} cardForm={appState.selectedForm} metadata={appState.metadata} lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] !== r[appState.metadata.PrimaryIdAttribute])))}} />);
 
   return (
     <div style={{height: "100%"}}>
@@ -293,6 +314,17 @@ export const Board = () => {
                 { appState.stateMetadata?.OptionSet.Options.map(o => <Dropdown.Item onClick={setStateFilter} as="button" id={o.Value} key={o.Value}>{o.Label.UserLocalizedLabel.Label}</Dropdown.Item>) }
               </DropdownButton>
             }
+            <InputGroup style={{marginLeft: "5px"}}>
+              <FormControl
+                value={searchText}
+                onChange={setSearchText}
+                onKeyPress={onSearchKey}
+                placeholder="Filter records"
+              />
+              <InputGroup.Append>
+                <Button variant="outline-secondary" onClick={search}><FontAwesomeIcon icon="search" /></Button>
+              </InputGroup.Append>
+            </InputGroup>
           </Nav>
           <Nav className="pull-right">
             <Button title="Work Indicator" disabled={!appState.workIndicator} variant="outline-primary">

@@ -35,7 +35,8 @@ type Action = { type: "setAppId", payload: string }
     | { type: "setNotifications", payload: Array<Notification>}
     | { type: "setWorkIndicator", payload: boolean}
     | { type: "setSelectedRecordDisplayType", payload: DisplayType }
-    | { type: "setFlyOutForm", payload: FlyOutForm };
+    | { type: "setFlyOutForm", payload: FlyOutForm }
+    | { type: "setSearchText", payload: string };
 
 export type Dispatch = (action: Action) => void;
 
@@ -64,6 +65,7 @@ export type AppStateProps = {
     workIndicator?: boolean;
     selectedRecordDisplayType?: DisplayType;
     flyOutForm?: FlyOutForm;
+    searchText?: string;
 };
 
 type AppContextProps = {
@@ -166,6 +168,9 @@ function stateReducer(state: AppStateProps, action: Action): AppStateProps {
         }
         case "setFlyOutForm": {
             return { ...state, flyOutForm: action.payload };
+        }
+        case "setSearchText": {
+            return { ...state, searchText: action.payload };
         }
     }
 }

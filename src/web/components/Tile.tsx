@@ -180,7 +180,7 @@ const TileRender = (props: TileProps) => {
             <Card style={{opacity, marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: props.borderColor, borderLeftWidth: "3px", ...props.style}}>
                 <Card.Header>
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
-                        { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
+                        { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow searchString={appState.searchText} type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                     <Dropdown as={ButtonGroup} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}>
                         <Button onClick={showNotifications} variant="outline-secondary">
@@ -205,7 +205,7 @@ const TileRender = (props: TileProps) => {
                 <Card.Body>
                     <Image  />
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
-                        { props.cardForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="body" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
+                        { props.cardForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={appState.searchText} type="body" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                     { props.secondaryData &&
                     <div>
@@ -221,7 +221,7 @@ const TileRender = (props: TileProps) => {
                 </Card.Body>
                 <Card.Footer style={{ backgroundColor: "#efefef" }}>
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
-                        { props.cardForm.parsed.footer.rows.map((r, i) => <div key={`footerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="footer" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
+                        { props.cardForm.parsed.footer.rows.map((r, i) => <div key={`footerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={appState.searchText} type="footer" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                 </Card.Footer>
             </Card>
