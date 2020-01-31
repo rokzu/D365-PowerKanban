@@ -4,29 +4,30 @@ import { Button, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { fetchData, refresh } from "../domain/fetchData";
 import { UserInputModal } from "./UserInputModalProps";
+import { useActionContext } from "../domain/ActionState";
 
 interface ExternalFormProps {
 }
 
 export const ExternalForm = (props: ExternalFormProps) => {
-    const [ appState, appDispatch ] = useAppContext();
+    const [ actionState, actionDispatch ] = useActionContext();
     const [ formData, setFormData ] = useState({} as any);
 
     const noCallBack = () => {
-        appState.flyOutForm.resolve({
+        actionState.flyOutForm.resolve({
             cancelled: true
         });
     };
 
     const yesCallBack = () => {
-        appState.flyOutForm.resolve({
+        actionState.flyOutForm.resolve({
             cancelled: false,
             values: formData
         });
     };
 
     const hideDialog = () => {
-        appDispatch({ type: "setFlyOutForm", payload: undefined });
+        actionDispatch({ type: "setFlyOutForm", payload: undefined });
     };
 
     const onFieldChange = (e: any) => {
@@ -37,14 +38,14 @@ export const ExternalForm = (props: ExternalFormProps) => {
     };
 
     return (
-        <UserInputModal okButtonDisabled={!Object.keys(appState.flyOutForm.fields).every(fieldId => !appState.flyOutForm.fields[fieldId].required || !!formData[fieldId])} noCallBack={noCallBack} yesCallBack={yesCallBack} finally={hideDialog} title={appState.flyOutForm?.title} show={!!appState.flyOutForm}>
-            {Object.keys(appState.flyOutForm.fields).map(fieldId =>
+        <UserInputModal okButtonDisabled={!Object.keys(actionState.flyOutForm.fields).every(fieldId => !actionState.flyOutForm.fields[fieldId].required || !!formData[fieldId])} noCallBack={noCallBack} yesCallBack={yesCallBack} finally={hideDialog} title={actionState.flyOutForm?.title} show={!!actionState.flyOutForm}>
+            {Object.keys(actionState.flyOutForm.fields).map(fieldId =>
                 <Form.Group key={fieldId} controlId={fieldId}>
-                    <Form.Label>{appState.flyOutForm.fields[fieldId].label}{appState.flyOutForm.fields[fieldId].required && <span style={{color: "red"}}>*</span>}</Form.Label>
-                    <Form.Control value={formData[fieldId]} onChange={onFieldChange} as={appState.flyOutForm.fields[fieldId].as} rows={appState.flyOutForm.fields[fieldId].rows} type={appState.flyOutForm.fields[fieldId].type} placeholder={appState.flyOutForm.fields[fieldId].placeholder ?? `Enter ${[appState.flyOutForm.fields[fieldId].label]}`} />
-                    { appState.flyOutForm.fields[fieldId].subtext &&
+                    <Form.Label>{actionState.flyOutForm.fields[fieldId].label}{actionState.flyOutForm.fields[fieldId].required && <span style={{color: "red"}}>*</span>}</Form.Label>
+                    <Form.Control value={formData[fieldId]} onChange={onFieldChange} as={actionState.flyOutForm.fields[fieldId].as} rows={actionState.flyOutForm.fields[fieldId].rows} type={actionState.flyOutForm.fields[fieldId].type} placeholder={actionState.flyOutForm.fields[fieldId].placeholder ?? `Enter ${[actionState.flyOutForm.fields[fieldId].label]}`} />
+                    { actionState.flyOutForm.fields[fieldId].subtext &&
                         <Form.Text className="text-muted">
-                            { appState.flyOutForm.fields[fieldId].subtext }
+                            { actionState.flyOutForm.fields[fieldId].subtext }
                         </Form.Text>
                     }
                 </Form.Group>

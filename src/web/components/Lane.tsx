@@ -3,11 +3,14 @@ import { useAppContext } from "../domain/AppState";
 import { Col, Card } from "react-bootstrap";
 import { Tile } from "./Tile";
 import { BoardLane } from "../domain/BoardLane";
-import { Metadata } from "../domain/Metadata";
+import { Metadata, Attribute } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
 import { useDrop } from "react-dnd";
 import { ItemTypes } from "../domain/ItemTypes";
 import { Option } from "../domain/Metadata";
+import { Notification } from "../domain/Notification";
+import { BoardViewConfig } from "../domain/BoardViewConfig";
+import { Subscription } from "../domain/Subscription";
 
 interface LaneProps {
     lane: BoardLane;
@@ -15,6 +18,11 @@ interface LaneProps {
     cardForm: CardForm;
     minWidth?: string;
     dndType?: string;
+    notifications: {[key: string]: Array<Notification>};
+    refresh: () => Promise<void>;
+    searchText: string;
+    subscriptions: Array<Subscription>;
+    selectedSecondaryForm?: CardForm;
 }
 
 const LaneRender = (props: LaneProps) => {
@@ -52,7 +60,19 @@ const LaneRender = (props: LaneProps) => {
             <Card style={{borderColor: "#d8d8d8", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
                 <Card.Body>
                     <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
-                    { props.lane.data.map(d => <Tile dndType={props.dndType} laneOption={props.lane.option} borderColor={borderColor} metadata={props.metadata} cardForm={props.cardForm} key={`tile_${d[props.metadata.PrimaryIdAttribute]}`} data={d} />) }
+                    { props.lane.data.map(d => <Tile
+                      notifications={props.notifications[d[props.metadata.PrimaryIdAttribute]] ?? []}
+                      dndType={props.dndType}
+                      laneOption={props.lane.option}
+                      borderColor={borderColor}
+                      metadata={props.metadata}
+                      cardForm={props.cardForm}
+                      key={`tile_${d[props.metadata.PrimaryIdAttribute]}`}
+                      refresh={props.refresh}
+                      subscriptions={props.subscriptions}
+                      searchText={props.searchText}
+                      data={d} />)
+                    }
                 </Card.Body>
             </Card>
         </div>

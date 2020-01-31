@@ -12,7 +12,7 @@ interface FieldRowProps {
     searchString?: string;
 }
 
-export const FieldRow = (props: FieldRowProps) => {
+const FieldRowRender = (props: FieldRowProps) => {
     const openRecord = (event: any) => {
         const [entity, id] = event.target.id.split("_");
         Xrm.Navigation.openForm({ entityName: entity, entityId: id, openInNewWindow: true });
@@ -76,3 +76,5 @@ export const FieldRow = (props: FieldRowProps) => {
         </div>
     );
 };
+
+export const FieldRow = React.memo(FieldRowRender);

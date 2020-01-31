@@ -6,46 +6,50 @@ import { fetchData, refresh, fetchNotifications } from "../domain/fetchData";
 import { NotificationTile } from "./NotificationTile";
 import WebApiClient from "xrm-webapi-client";
 import { FieldRow } from "./FieldRow";
+import { useActionContext } from "../domain/ActionState";
+import { useConfigState } from "../domain/ConfigState";
 
 interface NotificationListProps {
 }
 
 export const NotificationList = (props: NotificationListProps) => {
-  const [ appState, appDispatch ] = useAppContext();
+  const [ actionState, actionDispatch ] = useActionContext();
   const [ eventRecord, setEventRecord ] = useState(undefined);
+  const configState = useConfigState();
+  const [ appState, appDispatch ] = useAppContext();
 
-  const notificationRecord = appState.selectedRecord;
-  const notifications = appState.notifications.filter(n => n[`_oss_${appState.selectedRecord.entityType}id_value`] === appState.selectedRecord.id);
+  const notificationRecord = actionState.selectedRecord;
+  const notifications = appState.notifications[actionState.selectedRecord.entityType] ?? [];
   const columns = Array.from(new Set(notifications.reduce((all, cur) => [...all, ...cur.parsed.updatedFields], [] as Array<string>)));
-  const eventMeta = appState.selectedRecord.entityType === appState.config.entityName ? appState.metadata : appState.secondaryMetadata[appState.selectedRecord.entityType];
+  const eventMeta = actionState.selectedRecord.entityType === configState.config.entityName ? configState.metadata : configState.secondaryMetadata[actionState.selectedRecord.entityType];
 
   useEffect(() => {
     const fetchEventRecord = async() => {
       const fetch = `<fetch no-lock="true">
-        <entity name="${appState.selectedRecord.entityType}">
+        <entity name="${actionState.selectedRecord.entityType}">
           ${columns.map(c => `<attribute name="${c}"/>`).join("")}
           <filter>
-            <condition attribute="${appState.selectedRecord.entityType}id" operator="eq" value="${appState.selectedRecord.id}" />
+            <condition attribute="${actionState.selectedRecord.entityType}id" operator="eq" value="${actionState.selectedRecord.id}" />
           </filter>
         </entity>
       </fetch>`;
 
-      const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: appState.selectedRecord.entityType, fetchXml: fetch, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
+      const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: actionState.selectedRecord.entityType, fetchXml: fetch, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
       setEventRecord(data[0]);
     };
     fetchEventRecord();
   }, []);
 
   const closeSideBySide = () => {
-    appDispatch({ type: "setSelectedRecord", payload: undefined });
+    actionDispatch({ type: "setSelectedRecord", payload: undefined });
   };
 
   const openInNewTab = () => {
-    Xrm.Navigation.openForm({ entityName: appState.selectedRecord.entityType, entityId: appState.selectedRecord.id, openInNewWindow: true });
+    Xrm.Navigation.openForm({ entityName: actionState.selectedRecord.entityType, entityId: actionState.selectedRecord.id, openInNewWindow: true });
   };
 
   const clearAndRefresh = async () => {
-    appDispatch({ type: "setWorkIndicator", payload: true });
+    actionDispatch({ type: "setWorkIndicator", payload: true });
 
     await Promise.all(notifications.map(s =>
         WebApiClient.Delete({
@@ -54,9 +58,9 @@ export const NotificationList = (props: NotificationListProps) => {
         })
     ));
 
-    const newNotifications = await fetchNotifications();
+    const newNotifications = await fetchNotifications(configState.config);
     appDispatch({ type: "setNotifications", payload: newNotifications });
-    appDispatch({ type: "setWorkIndicator", payload: false });
+    actionDispatch({ type: "setWorkIndicator", payload: false });
     closeSideBySide();
 };
 

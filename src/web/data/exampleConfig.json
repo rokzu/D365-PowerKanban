@@ -1,5 +1,6 @@
 {
     "entityName": "incident",
+    "notificationLookup": "oss_incidentid",
     "defaultViewId": "",
     "showCreateButton": true,
     "swimLaneSource": "statuscode",
@@ -9,7 +10,8 @@
     "secondaryEntity": {
              "logicalName": "task",
              "parentLookup": "regardingobjectid",
-             "swimLaneSource": "statuscode"
+             "swimLaneSource": "statuscode",
+             "notificationLookup": "oss_taskid"
     },
     "customScriptUrl": "/WebResources/oss_/D365BoardView/js/exampleExternalScript.js",
     "transitionCallback": "boardViewExtender.onStateTransition"

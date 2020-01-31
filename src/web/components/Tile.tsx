@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useAppContext, useAppDispatch, AppStateProps, Dispatch, DisplayType } from "../domain/AppState";
+import React, { useContext, useEffect, useState, useMemo } from "react";
+import { useAppContext, useAppDispatch, AppStateProps, AppStateDispatch } from "../domain/AppState";
 import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, Image, Badge } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
-import { Metadata, Option } from "../domain/Metadata";
+import { Metadata, Option, Attribute } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
 import { BoardLane } from "../domain/BoardLane";
 import { Lane } from "./Lane";
@@ -12,21 +12,35 @@ import { refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetch
 import WebApiClient from "xrm-webapi-client";
 import { useDrag, DragSourceMonitor } from "react-dnd";
 import { FlyOutForm } from "../domain/FlyOutForm";
+import { Notification } from "../domain/Notification";
+import { BoardViewConfig } from "../domain/BoardViewConfig";
+import { Subscription } from "../domain/Subscription";
+import { useConfigState } from "../domain/ConfigState";
+import { useActionContext, DisplayType, useActionDispatch } from "../domain/ActionState";
 
 interface TileProps {
     data: any;
     metadata: Metadata;
     cardForm: CardForm;
     secondaryData?: Array<BoardLane>;
+    selectedSecondaryForm?: CardForm;
+    secondaryNotifications?: {[key: string]: Array<Notification>};
     borderColor: string;
     style?: React.CSSProperties;
     laneOption?: Option;
     dndType?: string;
+    notifications: Array<Notification>;
+    refresh: () => Promise<void>;
+    subscriptions: Array<Subscription>;
+    searchText: string;
 }
 
 const TileRender = (props: TileProps) => {
-    const [appState, appDispatch] = useAppContext();
-    const secondaryMetadata = appState.secondaryMetadata[appState.config.secondaryEntity.logicalName];
+    const appDispatch = useAppDispatch();
+    const configState = useConfigState();
+    const actionDispatch = useActionDispatch();
+
+    const secondaryMetadata = configState.secondaryMetadata[configState.config.secondaryEntity.logicalName];
 
     const [{ isDragging }, drag] = useDrag({
         item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile },
@@ -40,14 +54,14 @@ const TileRender = (props: TileProps) => {
 
                 let preventDefault = true;
 
-                if (appState.config.transitionCallback) {
+                if (configState.config.transitionCallback) {
                     const context = {
                         showForm: (form: FlyOutForm) => {
                             return new Promise((resolve, reject) => {
                                 form.resolve = resolve;
                                 form.reject = reject;
 
-                                appDispatch({ type: "setFlyOutForm", payload: form });
+                                actionDispatch({ type: "setFlyOutForm", payload: form });
                             });
                         },
                         data: props.data,
@@ -55,7 +69,7 @@ const TileRender = (props: TileProps) => {
                         WebApiClient: WebApiClient
                     };
 
-                    const path = appState.config.transitionCallback.split(".");
+                    const path = configState.config.transitionCallback.split(".");
                     const funcRef = path.reduce((all, cur) => !all ? undefined : (all as any)[cur], window);
 
                     const result = await Promise.resolve(funcRef(context));
@@ -63,26 +77,26 @@ const TileRender = (props: TileProps) => {
                 }
 
                 if (preventDefault) {
-                    appDispatch({ type: "setWorkIndicator", payload: false });
-                    await refresh(appDispatch, appState);
+                    actionDispatch({ type: "setWorkIndicator", payload: false });
+                    await props.refresh();
                 }
                 else {
-                    appDispatch({ type: "setWorkIndicator", payload: true });
+                    actionDispatch({ type: "setWorkIndicator", payload: true });
                     const itemId = item.id;
                     const targetOption = dropResult.option as Option;
-                    const update: any = { [appState.separatorMetadata.LogicalName]: targetOption.Value };
+                    const update: any = { [configState.separatorMetadata.LogicalName]: targetOption.Value };
 
-                    if (appState.separatorMetadata.LogicalName === "statuscode") {
+                    if (configState.separatorMetadata.LogicalName === "statuscode") {
                         update["statecode"] = targetOption.State;
                     }
 
                     WebApiClient.Update({ entityName: props.metadata.LogicalName, entityId: itemId, entity: update })
                     .then((r: any) => {
-                        appDispatch({ type: "setWorkIndicator", payload: false });
-                        return refresh(appDispatch, appState);
+                        actionDispatch({ type: "setWorkIndicator", payload: false });
+                        return props.refresh();
                     })
                     .catch((e: any) => {
-                        appDispatch({ type: "setWorkIndicator", payload: false });
+                        actionDispatch({ type: "setWorkIndicator", payload: false });
                     });
                 }
             };
@@ -97,13 +111,13 @@ const TileRender = (props: TileProps) => {
     const opacity = isDragging ? 0.4 : 1;
 
     const setSelectedRecord = () => {
-        appDispatch({ type: "setSelectedRecordDisplayType", payload: DisplayType.recordForm });
-        appDispatch({ type: "setSelectedRecord", payload: { entityType: props.metadata.LogicalName, id: props.data[props.metadata?.PrimaryIdAttribute] } });
+        actionDispatch({ type: "setSelectedRecordDisplayType", payload: DisplayType.recordForm });
+        actionDispatch({ type: "setSelectedRecord", payload: { entityType: props.metadata.LogicalName, id: props.data[props.metadata?.PrimaryIdAttribute] } });
     };
 
     const showNotifications = () => {
-        appDispatch({ type: "setSelectedRecordDisplayType", payload: DisplayType.notifications });
-        appDispatch({ type: "setSelectedRecord", payload: { entityType: props.metadata.LogicalName, id: props.data[props.metadata?.PrimaryIdAttribute] } });
+        actionDispatch({ type: "setSelectedRecordDisplayType", payload: DisplayType.notifications });
+        actionDispatch({ type: "setSelectedRecord", payload: { entityType: props.metadata.LogicalName, id: props.data[props.metadata?.PrimaryIdAttribute] } });
     };
 
     const openInNewTab = () => {
@@ -111,7 +125,7 @@ const TileRender = (props: TileProps) => {
     };
 
     const createNewSecondary = async () => {
-        const parentLookup = appState.config.secondaryEntity.parentLookup;
+        const parentLookup = configState.config.secondaryEntity.parentLookup;
         const data = {
             [parentLookup]: props.data[props.metadata.PrimaryIdAttribute],
             [`${parentLookup}type`]: props.metadata.LogicalName,
@@ -121,12 +135,12 @@ const TileRender = (props: TileProps) => {
         const result = await Xrm.Navigation.openForm({ entityName: secondaryMetadata.LogicalName, useQuickCreateForm: true }, data);
 
         if (result && result.savedEntityReference) {
-            refresh(appDispatch, appState);
+            props.refresh();
         }
     };
 
     const subscribe = async () => {
-        appDispatch({ type: "setWorkIndicator", payload: true });
+        actionDispatch({ type: "setWorkIndicator", payload: true });
 
         await WebApiClient.Create({
             entityName: "oss_subscription",
@@ -137,12 +151,12 @@ const TileRender = (props: TileProps) => {
 
         const subscriptions = await fetchSubscriptions();
         appDispatch({ type: "setSubscriptions", payload: subscriptions });
-        appDispatch({ type: "setWorkIndicator", payload: false });
+        actionDispatch({ type: "setWorkIndicator", payload: false });
     };
 
     const unsubscribe = async () => {
-        appDispatch({ type: "setWorkIndicator", payload: true });
-        const subscriptionsToDelete = appState.subscriptions.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
+        actionDispatch({ type: "setWorkIndicator", payload: true });
+        const subscriptionsToDelete = props.subscriptions.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
 
         await Promise.all(subscriptionsToDelete.map(s =>
             WebApiClient.Delete({
@@ -153,12 +167,12 @@ const TileRender = (props: TileProps) => {
 
         const subscriptions = await fetchSubscriptions();
         appDispatch({ type: "setSubscriptions", payload: subscriptions });
-        appDispatch({ type: "setWorkIndicator", payload: false });
+        actionDispatch({ type: "setWorkIndicator", payload: false });
     };
 
     const clearNotifications = async () => {
-        appDispatch({ type: "setWorkIndicator", payload: true });
-        const notificationsToDelete = appState.notifications.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
+        actionDispatch({ type: "setWorkIndicator", payload: true });
+        const notificationsToDelete = props.notifications;
 
         await Promise.all(notificationsToDelete.map(s =>
             WebApiClient.Delete({
@@ -167,25 +181,24 @@ const TileRender = (props: TileProps) => {
             })
         ));
 
-        const notifications = await fetchNotifications();
+        const notifications = await fetchNotifications(configState.config);
         appDispatch({ type: "setNotifications", payload: notifications });
-        appDispatch({ type: "setWorkIndicator", payload: false });
+        actionDispatch({ type: "setWorkIndicator", payload: false });
     };
 
-    const notifications = appState.notifications.filter(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
-    const isSubscribed = appState.subscriptions.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]);
+    const isSubscribed = useMemo(() => props.subscriptions.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]), [props.subscriptions]);
 
     return (
         <div ref={drag}>
             <Card style={{opacity, marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: props.borderColor, borderLeftWidth: "3px", ...props.style}}>
                 <Card.Header>
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
-                        { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow searchString={appState.searchText} type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
+                        { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                     <Dropdown as={ButtonGroup} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}>
                         <Button onClick={showNotifications} variant="outline-secondary">
                             {
-                            <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { notifications.length > 0 && <Badge variant="danger">{notifications.length}</Badge> }</span>
+                            <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { props.notifications.length > 0 && <Badge variant="danger">{props.notifications.length}</Badge> }</span>
                             }
                         </Button>
                         <Dropdown.Toggle split variant="outline-secondary" id="dropdown-split-basic" />
@@ -199,13 +212,13 @@ const TileRender = (props: TileProps) => {
                     <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
                         <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
                         <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
-                        { appState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
+                        { configState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
                     </DropdownButton>
                 </Card.Header>
                 <Card.Body>
                     <Image  />
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
-                        { props.cardForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={appState.searchText} type="body" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
+                        { props.cardForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="body" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                     { props.secondaryData &&
                     <div>
@@ -214,19 +227,32 @@ const TileRender = (props: TileProps) => {
                         </span>
                         <Button style={{marginLeft: "5px"}} variant="outline-secondary" onClick={createNewSecondary}><FontAwesomeIcon icon="plus-square" /></Button>
                         <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "auto" }}>
-                            { props.secondaryData.map(d => <Lane dndType={`${ItemTypes.Tile}_${props.data[props.metadata.PrimaryIdAttribute]}`} key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px" cardForm={appState.selectedSecondaryForm} metadata={secondaryMetadata} lane={d} />) }
+                            {
+                                props.secondaryData.map(d => <Lane
+                                refresh={props.refresh}
+                                notifications={props.secondaryNotifications}
+                                searchText={props.searchText}
+                                subscriptions={props.subscriptions}
+                                dndType={`${ItemTypes.Tile}_${props.data[props.metadata.PrimaryIdAttribute]}`}
+                                key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px"
+                                cardForm={props.selectedSecondaryForm}
+                                metadata={secondaryMetadata}
+                                lane={d} />)
+                            }
                         </div>
                     </div>
                     }
                 </Card.Body>
                 <Card.Footer style={{ backgroundColor: "#efefef" }}>
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
-                        { props.cardForm.parsed.footer.rows.map((r, i) => <div key={`footerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={appState.searchText} type="footer" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
+                        { props.cardForm.parsed.footer.rows.map((r, i) => <div key={`footerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="footer" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
                 </Card.Footer>
             </Card>
         </div>
     );
 };
+
+TileRender.whyDidYouRender = true;
 
 export const Tile = React.memo(TileRender);

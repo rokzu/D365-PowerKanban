@@ -14,6 +14,8 @@ import { fetchData, refresh, fetchSubscriptions, fetchNotifications } from "../d
 import { Tile } from "./Tile";
 import { DndContainer } from "./DndContainer";
 import { loadExternalScript } from "../domain/LoadExternalScript";
+import { useConfigContext } from "../domain/ConfigState";
+import { useActionContext } from "../domain/ActionState";
 
 const determineAttributeUrl = (attribute: Attribute) => {
   if (attribute.AttributeType === "Picklist") {
@@ -59,6 +61,9 @@ type DisplayState = "simple" | "advanced";
 
 export const Board = () => {
   const [ appState, appDispatch ] = useAppContext();
+  const [ actionState, actionDispatch ] = useActionContext();
+  const [ configState, configDispatch ] = useConfigContext();
+
   const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
   const [ secondaryViews, setSecondaryViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
   const [ cardForms, setCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
@@ -67,33 +72,34 @@ export const Board = () => {
   const [ stateFilters, setStateFilters ]: [Array<Option>, (options: Array<Option>) => void] = useState([]);
   const [ displayState, setDisplayState ]: [DisplayState, (state: DisplayState) => void] = useState("simple" as any);
   const [ searchText, setSearch] = useState("");
+  const [ appliedSearchText, setAppliedSearch ] = useState(undefined);
 
   useEffect(() => {
     async function initializeConfig() {
       try {
         const userId = formatGuid(Xrm.Page.context.getUserId());
 
-        appDispatch({ type: "setProgressText", payload: "Retrieving user settings" });
+        actionDispatch({ type: "setProgressText", payload: "Retrieving user settings" });
 
         const user = await WebApiClient.Retrieve({ entityName: "systemuser", entityId: userId, queryParams: "?$select=oss_defaultboardid"});
 
-        appDispatch({ type: "setProgressText", payload: "Fetching configuration" });
+        actionDispatch({ type: "setProgressText", payload: "Fetching configuration" });
 
         const config = await fetchConfig(user.oss_defaultboardid);
 
         if (config.customScriptUrl) {
-          appDispatch({ type: "setProgressText", payload: "Loading custom scripts" });
+          actionDispatch({ type: "setProgressText", payload: "Loading custom scripts" });
           await loadExternalScript(config.customScriptUrl);
         }
 
-        appDispatch({ type: "setProgressText", payload: "Fetching meta data" });
+        actionDispatch({ type: "setProgressText", payload: "Fetching meta data" });
 
         const metadata = await fetchMetadata(config.entityName);
         const attributeMetadata = await fetchSeparatorMetadata(config.entityName, config.swimLaneSource, metadata);
         const stateMetadata = await fetchSeparatorMetadata(config.entityName, "statecode", metadata);
 
         const notificationMetadata = await fetchMetadata("oss_notification");
-        appDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
+        configDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
 
         let secondaryMetadata: Metadata;
         let secondaryAttributeMetadata: Attribute;
@@ -102,15 +108,15 @@ export const Board = () => {
           secondaryMetadata = await fetchMetadata(config.secondaryEntity.logicalName);
           secondaryAttributeMetadata = await fetchSeparatorMetadata(config.secondaryEntity.logicalName, config.secondaryEntity.swimLaneSource, secondaryMetadata);
 
-          appDispatch({ type: "setSecondaryMetadata", payload: { entity: config.secondaryEntity.logicalName, data: secondaryMetadata } });
-          appDispatch({ type: "setSecondarySeparatorMetadata", payload: secondaryAttributeMetadata });
+          configDispatch({ type: "setSecondaryMetadata", payload: { entity: config.secondaryEntity.logicalName, data: secondaryMetadata } });
+          configDispatch({ type: "setSecondarySeparatorMetadata", payload: secondaryAttributeMetadata });
         }
 
-        appDispatch({ type: "setConfig", payload: config });
-        appDispatch({ type: "setMetadata", payload: metadata });
-        appDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
-        appDispatch({ type: "setStateMetadata", payload: stateMetadata });
-        appDispatch({ type: "setProgressText", payload: "Fetching views" });
+        configDispatch({ type: "setConfig", payload: config });
+        configDispatch({ type: "setMetadata", payload: metadata });
+        configDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
+        configDispatch({ type: "setStateMetadata", payload: stateMetadata });
+        actionDispatch({ type: "setProgressText", payload: "Fetching views" });
 
         const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
         setViews(views);
@@ -121,13 +127,13 @@ export const Board = () => {
           setSecondaryViews(secondaryViews);
           defaultSecondaryView = secondaryViews[0];
 
-          appDispatch({ type: "setSelectedSecondaryView", payload: defaultSecondaryView });
+          actionDispatch({ type: "setSelectedSecondaryView", payload: defaultSecondaryView });
         }
 
         const defaultView = views[0];
 
-        appDispatch({ type: "setSelectedView", payload: defaultView });
-        appDispatch({ type: "setProgressText", payload: "Fetching forms" });
+        actionDispatch({ type: "setSelectedView", payload: defaultView });
+        actionDispatch({ type: "setProgressText", payload: "Fetching forms" });
 
         const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.entityName}' and type eq 11`});
         const processedForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
@@ -135,7 +141,7 @@ export const Board = () => {
 
         const { value: notificationForms } = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq 'oss_notification' and type eq 11`});
         const processedNotificationForms = notificationForms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
-        appDispatch({ type: "setNotificationForm", payload: processedNotificationForms[0] });
+        configDispatch({ type: "setNotificationForm", payload: processedNotificationForms[0] });
 
         let defaultSecondaryForm;
         if (config.secondaryEntity) {
@@ -144,22 +150,22 @@ export const Board = () => {
           setSecondaryCardForms(processedSecondaryForms);
 
           defaultSecondaryForm = processedSecondaryForms[0];
-          appDispatch({ type: "setSelectedSecondaryForm", payload: defaultSecondaryForm });
+          actionDispatch({ type: "setSelectedSecondaryForm", payload: defaultSecondaryForm });
         }
 
         const defaultForm = processedForms[0];
 
-        appDispatch({ type: "setSelectedForm", payload: defaultForm });
+        actionDispatch({ type: "setSelectedForm", payload: defaultForm });
 
-        appDispatch({ type: "setProgressText", payload: "Fetching subscriptions" });
+        actionDispatch({ type: "setProgressText", payload: "Fetching subscriptions" });
         const subscriptions = await fetchSubscriptions();
         appDispatch({ type: "setSubscriptions", payload: subscriptions });
 
-        appDispatch({ type: "setProgressText", payload: "Fetching notifications" });
-        const notifications = await fetchNotifications();
+        actionDispatch({ type: "setProgressText", payload: "Fetching notifications" });
+        const notifications = await fetchNotifications(config);
         appDispatch({ type: "setNotifications", payload: notifications });
 
-        appDispatch({ type: "setProgressText", payload: "Fetching data" });
+        actionDispatch({ type: "setProgressText", payload: "Fetching data" });
 
         const data = await fetchData(config.entityName, defaultView.fetchxml, config.swimLaneSource, defaultForm, metadata, attributeMetadata);
 
@@ -182,7 +188,7 @@ export const Board = () => {
         }
 
         appDispatch({ type: "setBoardData", payload: data });
-        appDispatch({ type: "setProgressText", payload: undefined });
+        actionDispatch({ type: "setProgressText", payload: undefined });
       }
       catch (e) {
         Xrm.Utility.alertDialog(e?.message ?? e, () => {});
@@ -200,10 +206,10 @@ export const Board = () => {
   };
 
   const newRecord = async () => {
-    const result = await Xrm.Navigation.openForm({ entityName: appState.config.entityName, useQuickCreateForm: true }, undefined);
+    const result = await Xrm.Navigation.openForm({ entityName: configState.config.entityName, useQuickCreateForm: true }, undefined);
 
     if (result && result.savedEntityReference) {
-      refresh(appDispatch, appState);
+      refreshBoard();
     }
   };
 
@@ -211,32 +217,32 @@ export const Board = () => {
     const viewId = event.target.id;
     const view = views.find(v => v.savedqueryid === viewId);
 
-    appDispatch({ type: "setSelectedView", payload: view });
-    refresh(appDispatch, appState, view.fetchxml);
+    actionDispatch({ type: "setSelectedView", payload: view });
+    refresh(appDispatch, appState, configState, actionDispatch, actionState, view.fetchxml);
   };
 
   const setForm = (event: any) => {
     const formId = event.target.id;
     const form = cardForms.find(f => f.formid === formId);
 
-    appDispatch({ type: "setSelectedForm", payload: form });
-    refresh(appDispatch, appState, undefined, form);
+    actionDispatch({ type: "setSelectedForm", payload: form });
+    refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, form);
   };
 
   const setSecondaryView = (event: any) => {
     const viewId = event.target.id;
     const view = secondaryViews.find(v => v.savedqueryid === viewId);
 
-    appDispatch({ type: "setSelectedSecondaryView", payload: view });
-    refresh(appDispatch, appState, undefined, undefined, view.fetchxml, undefined);
+    actionDispatch({ type: "setSelectedSecondaryView", payload: view });
+    refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, undefined, view.fetchxml, undefined);
   };
 
   const setSecondaryForm = (event: any) => {
     const formId = event.target.id;
     const form = secondaryCardForms.find(f => f.formid === formId);
 
-    appDispatch({ type: "setSelectedSecondaryForm", payload: form });
-    refresh(appDispatch, appState, undefined, undefined, undefined, form);
+    actionDispatch({ type: "setSelectedSecondaryForm", payload: form });
+    refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, undefined, undefined, form);
   };
 
   const setStateFilter = (event: any) => {
@@ -246,7 +252,7 @@ export const Board = () => {
       setStateFilters(stateFilters.filter(f => f.Value != stateValue));
     }
     else {
-      setStateFilters([...stateFilters, appState.stateMetadata.OptionSet.Options.find(o => o.Value == stateValue)]);
+      setStateFilters([...stateFilters, configState.stateMetadata.OptionSet.Options.find(o => o.Value == stateValue)]);
     }
   };
 
@@ -263,7 +269,7 @@ export const Board = () => {
   };
 
   const search = () => {
-    appDispatch({type: "setSearchText", payload: searchText});
+    setAppliedSearch(searchText || undefined);
   };
 
   const onSearchKey = (e: any) => {
@@ -272,27 +278,57 @@ export const Board = () => {
     }
   };
 
-  const advancedData = displayState === "advanced" && appState.boardData &&
+  const refreshBoard = () => {
+    return refresh(appDispatch, appState, configState, actionDispatch, actionState);
+  };
+
+  const advancedData = React.useMemo(() => {
+    return displayState === "advanced" && appState.boardData &&
     appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State))
-    .map(d => !appState.searchText ? d : { ...d, data: d.data.filter(data => Object.keys(data).some(k => `${data[k]}`.toLowerCase().includes(appState.searchText.toLowerCase()))) })
-    .reduce((all, curr) => all.concat(curr.data.filter(d => appState.secondaryData.some(t => t.data.some(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute]))).map(d => <Tile borderColor={curr.option.Color ?? "#3b79b7"} cardForm={appState.selectedForm} metadata={appState.metadata} key={`tile_${d[appState.metadata.PrimaryIdAttribute]}`} style={{ margin: "5px" }} data={d} secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${appState.config.secondaryEntity.parentLookup}_value`] === d[appState.metadata.PrimaryIdAttribute])}))} />)), []);
-  const simpleData = appState.boardData && appState.boardData
-    .filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State))
-    .map(d => !appState.searchText ? d : { ...d, data: d.data.filter(data => Object.keys(data).some(k => `${data[k]}`.toLowerCase().includes(appState.searchText.toLowerCase()))) })
-    .map(d => <Lane key={`lane_${d.option?.Value ?? "fallback"}`} cardForm={appState.selectedForm} metadata={appState.metadata} lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${appState.config.secondaryEntity.parentLookup}_value`] !== r[appState.metadata.PrimaryIdAttribute])))}} />);
+    .map(d => !appliedSearchText ? d : { ...d, data: d.data.filter(data => Object.keys(data).some(k => `${data[k]}`.toLowerCase().includes(appliedSearchText.toLowerCase()))) })
+    .reduce((all, curr) => all.concat(curr.data.filter(d => appState.secondaryData.some(t => t.data.some(tt => tt[`_${configState.config.secondaryEntity.parentLookup}_value`] === d[configState.metadata.PrimaryIdAttribute]))).map(d => <Tile
+      notifications={!appState.notifications ? [] : appState.notifications[d[configState.metadata.PrimaryIdAttribute]]}
+      borderColor={curr.option.Color ?? "#3b79b7"}
+      cardForm={actionState.selectedForm}
+      metadata={configState.metadata}
+      key={`tile_${d[configState.metadata.PrimaryIdAttribute]}`}
+      style={{ margin: "5px" }}
+      data={d}
+      refresh={refreshBoard}
+      searchText={appliedSearchText}
+      subscriptions={appState.subscriptions}
+      selectedSecondaryForm={actionState.selectedSecondaryForm}
+      secondaryNotifications={appState.notifications}
+      secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${configState.config.secondaryEntity.parentLookup}_value`] === d[configState.metadata.PrimaryIdAttribute])}))} />)), []);
+  }, [displayState, appState.boardData, appState.secondaryData, stateFilters, appliedSearchText, appState.notifications, appState.subscriptions, actionState.selectedSecondaryForm]);
+
+    const simpleData = React.useMemo(() => {
+      return appState.boardData && appState.boardData
+      .filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State))
+      .map(d => !appliedSearchText ? d : { ...d, data: d.data.filter(data => Object.keys(data).some(k => `${data[k]}`.toLowerCase().includes(appliedSearchText.toLowerCase()))) })
+      .map(d => <Lane
+        notifications={appState.notifications}
+        key={`lane_${d.option?.Value ?? "fallback"}`}
+        cardForm={actionState.selectedForm}
+        metadata={configState.metadata}
+        refresh={refreshBoard}
+        searchText={appliedSearchText}
+        subscriptions={appState.subscriptions}
+        lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${configState.config.secondaryEntity.parentLookup}_value`] !== r[configState.metadata.PrimaryIdAttribute])))}} />);
+    }, [appState.boardData, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications]);
 
   return (
     <div style={{height: "100%"}}>
       <UserInputModal title="Verify Deletion" yesCallBack={deleteRecord} finally={hideDeletionVerification} show={showDeletionVerification}>
-        <div>Are you sure you want to delete  '{appState.selectedRecord && appState.selectedRecord.name}' (ID: {appState.selectedRecord && appState.selectedRecord.id})?</div>
+        <div>Are you sure you want to delete  '{actionState.selectedRecord && actionState.selectedRecord.name}' (ID: {actionState.selectedRecord && actionState.selectedRecord.id})?</div>
       </UserInputModal>
       <Navbar bg="light" variant="light" fixed="top">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
-            <DropdownButton variant="outline-primary" id="viewSelector" title={<>{appState.selectedView?.name} <Badge variant="primary">{appState?.boardData?.reduce((count, l) => count + l.data.length, 0)}</Badge></> ?? "Select view"}>
+            <DropdownButton variant="outline-primary" id="viewSelector" title={<>{actionState.selectedView?.name} <Badge variant="primary">{appState?.boardData?.reduce((count, l) => count + l.data.length, 0)}</Badge></> ?? "Select view"}>
               { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
             </DropdownButton>
-            <DropdownButton variant="outline-primary" id="formSelector" title={appState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
+            <DropdownButton variant="outline-primary" id="formSelector" title={actionState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
               { cardForms?.map(f => <Dropdown.Item onClick={setForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
             </DropdownButton>
             <DropdownButton variant="outline-primary" id="displaySelector" title={displayState === "simple" ? "Simple" : "Advanced"} style={{marginLeft: "5px"}}>
@@ -301,17 +337,17 @@ export const Board = () => {
             </DropdownButton>
             { displayState === "advanced" &&
               <>
-                <DropdownButton variant="outline-primary" id="secondaryViewSelector" title={appState.selectedSecondaryView?.name ?? "Select view"} style={{marginLeft: "5px"}}>
+                <DropdownButton variant="outline-primary" id="secondaryViewSelector" title={actionState.selectedSecondaryView?.name ?? "Select view"} style={{marginLeft: "5px"}}>
                   { secondaryViews?.map(v => <Dropdown.Item onClick={setSecondaryView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
                 </DropdownButton>
-                <DropdownButton variant="outline-primary" id="secondaryFormSelector" title={appState.selectedSecondaryForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
+                <DropdownButton variant="outline-primary" id="secondaryFormSelector" title={actionState.selectedSecondaryForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>
                   { secondaryCardForms?.map(f => <Dropdown.Item onClick={setSecondaryForm} as="button" id={f.formid} key={f.formid}>{f.name}</Dropdown.Item>) }
                 </DropdownButton>
               </>
             }
-            { appState.config?.swimLaneSource === "statuscode" &&
+            { configState.config?.swimLaneSource === "statuscode" &&
               <DropdownButton variant="outline-primary" id="formSelector" title={stateFilters.length ? stateFilters.map(f => f.Label.UserLocalizedLabel.Label).join("|") : "All states"} style={{marginLeft: "5px"}}>
-                { appState.stateMetadata?.OptionSet.Options.map(o => <Dropdown.Item onClick={setStateFilter} as="button" id={o.Value} key={o.Value}>{o.Label.UserLocalizedLabel.Label}</Dropdown.Item>) }
+                { configState.stateMetadata?.OptionSet.Options.map(o => <Dropdown.Item onClick={setStateFilter} as="button" id={o.Value} key={o.Value}>{o.Label.UserLocalizedLabel.Label}</Dropdown.Item>) }
               </DropdownButton>
             }
             <InputGroup style={{marginLeft: "5px"}}>
@@ -327,11 +363,11 @@ export const Board = () => {
             </InputGroup>
           </Nav>
           <Nav className="pull-right">
-            <Button title="Work Indicator" disabled={!appState.workIndicator} variant="outline-primary">
-              <FontAwesomeIcon spin={!!appState.workIndicator} icon="spinner" />
+            <Button title="Work Indicator" disabled={!actionState.workIndicator} variant="outline-primary">
+              <FontAwesomeIcon spin={!!actionState.workIndicator} icon="spinner" />
             </Button>
-            { appState.config && appState.config.showCreateButton && <Button style={{marginLeft: "5px"}}  variant="outline-primary" onClick={newRecord}>Create New</Button> }
-            <Button variant="outline-primary" style={{marginLeft: "5px"}} onClick={() => refresh(appDispatch, appState)}>
+            { configState.config && configState.config.showCreateButton && <Button style={{marginLeft: "5px"}}  variant="outline-primary" onClick={newRecord}>Create New</Button> }
+            <Button variant="outline-primary" style={{marginLeft: "5px"}} onClick={refreshBoard}>
               <FontAwesomeIcon icon="sync" />
             </Button>
           </Nav>

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useAppContext, useAppDispatch, AppStateProps, Dispatch, DisplayType } from "../domain/AppState";
+import { useAppContext, useAppDispatch, AppStateProps, AppStateDispatch } from "../domain/AppState";
 import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, Image, Badge } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
 import { Metadata, Option } from "../domain/Metadata";
@@ -8,6 +8,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
 import WebApiClient from "xrm-webapi-client";
 import { Notification } from "../domain/Notification";
+import { useConfigState } from "../domain/ConfigState";
+import { useActionContext } from "../domain/ActionState";
 
 interface NotificationTileProps {
     data: Notification;
@@ -16,30 +18,32 @@ interface NotificationTileProps {
 }
 
 const NotificationTileRender = (props: NotificationTileProps) => {
-    const [appState, appDispatch] = useAppContext();
-    const metadata = appState.secondaryMetadata["oss_notification"];
+    const configState = useConfigState();
+    const appDispatch = useAppDispatch();
+    const [ actionState, actionDispatch ] = useActionContext();
+    const metadata = configState.secondaryMetadata["oss_notification"];
     const eventRecord = props.data.parsed.eventRecordReference;
 
-    const eventMeta = eventRecord.LogicalName === appState.config.entityName ? appState.metadata : appState.secondaryMetadata[eventRecord.LogicalName];
+    const eventMeta = eventRecord.LogicalName === configState.config.entityName ? configState.metadata : configState.secondaryMetadata[eventRecord.LogicalName];
 
     const clearNotification = async () => {
-        appDispatch({ type: "setWorkIndicator", payload: true });
+        actionDispatch({ type: "setWorkIndicator", payload: true });
 
         await WebApiClient.Delete({
                 entityName: "oss_notification",
                 entityId: props.data.oss_notificationid
         });
 
-        const notifications = await fetchNotifications();
+        const notifications = await fetchNotifications(configState.config);
         appDispatch({ type: "setNotifications", payload: notifications });
-        appDispatch({ type: "setWorkIndicator", payload: false });
+        actionDispatch({ type: "setWorkIndicator", payload: false });
     };
 
     return (
         <Card style={{ margin: "5px", borderColor: "#d8d8d8", borderLeftWidth: "3px", ...props.style }}>
             <Card.Header>
                 <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
-                    { appState.notificationForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={metadata} data={props.data} cells={r.cells} /></div>) }
+                    { configState.notificationForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={metadata} data={props.data} cells={r.cells} /></div>) }
                 </div>
                 <Button title="Mark as read" onClick={clearNotification} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}><FontAwesomeIcon icon="eye-slash" /></Button>
             </Card.Header>
@@ -51,12 +55,12 @@ const NotificationTileRender = (props: NotificationTileProps) => {
                     </div>
                 }
                 <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
-                    { appState.notificationForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="body" metadata={metadata} data={props.data} cells={r.cells} /></div>) }
+                    { configState.notificationForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="body" metadata={metadata} data={props.data} cells={r.cells} /></div>) }
                 </div>
             </Card.Body>
             <Card.Footer style={{ backgroundColor: "#efefef" }}>
                 <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
-                    { appState.notificationForm.parsed.footer.rows.map((r, i) => <div key={`footerRow_${props.data[metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="footer" metadata={metadata} data={props.data} cells={r.cells} /></div>) }
+                    { configState.notificationForm.parsed.footer.rows.map((r, i) => <div key={`footerRow_${props.data[metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow type="footer" metadata={metadata} data={props.data} cells={r.cells} /></div>) }
                 </div>
             </Card.Footer>
         </Card>

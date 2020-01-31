@@ -3,9 +3,11 @@ import { BoardViewConfig } from "./BoardViewConfig";
 import { Attribute, Metadata } from "./Metadata";
 import WebApiClient from "xrm-webapi-client";
 import { CardForm, CardSegment } from "./CardForm";
-import { Dispatch, AppStateProps } from "./AppState";
+import { AppStateDispatch, AppStateProps } from "./AppState";
 import { OperationalError } from "bluebird";
 import { Notification } from "../domain/Notification";
+import { ActionStateProps, ActionDispatch } from "./ActionState";
+import { ConfigStateProps } from "./ConfigState";
 
 const getFieldsFromSegment = (segment: CardSegment): Array<string> => segment.rows.reduce((all, curr) => [...all, ...curr.cells.map(c => c.field)], []);
 
@@ -149,7 +151,7 @@ export const fetchSubscriptions = async () => {
   return data;
 };
 
-export const fetchNotifications = async () => {
+export const fetchNotifications = async (config: BoardViewConfig): Promise<{[key: string]: Array<Notification>}> => {
   const { value: data } = await WebApiClient.Retrieve({
     entityName: "oss_notification",
     queryParams: `?$filter=_ownerid_value eq ${Xrm.Page.context.getUserId().replace("{", "").replace("}", "")}&$orderby=createdon desc`,
@@ -157,37 +159,52 @@ export const fetchNotifications = async () => {
     headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ]
   });
 
-  return data.map((d: Notification) => ({...d, parsed: d.oss_data ? JSON.parse(d.oss_data) : undefined }));
+  const notifications: Array<Notification> = data.map((d: Notification) => ({...d, parsed: d.oss_data ? JSON.parse(d.oss_data) : undefined }));
+  const primaryNotificationLookup = `_${config.notificationLookup}_value`;
+  const secondaryNotificationLookup = `_${config.secondaryEntity.notificationLookup}_value`;
+
+  return notifications.reduce((all, cur) => {
+    const id = cur[primaryNotificationLookup] ?? cur[secondaryNotificationLookup];
+
+    if (all[id]) {
+      all[id].push(cur);
+    }
+    else {
+      all[id] = [cur];
+    }
+
+    return all;
+  }, {} as {[key: string]: Array<Notification>});
 };
 
-export const refresh = async (appDispatch: Dispatch, appState: AppStateProps, fetchXml?: string, selectedForm?: CardForm, secondaryFetchXml?: string, secondarySelectedForm?: CardForm) => {
-  appDispatch({ type: "setProgressText", payload: "Fetching data" });
+export const refresh = async (appDispatch: AppStateDispatch, appState: AppStateProps, configState: ConfigStateProps, actionDispatch: ActionDispatch, actionState: ActionStateProps, fetchXml?: string, selectedForm?: CardForm, secondaryFetchXml?: string, secondarySelectedForm?: CardForm) => {
+  actionDispatch({ type: "setProgressText", payload: "Fetching data" });
 
   try {
-    const data = await fetchData(appState.config.entityName,
-      fetchXml ?? appState.selectedView.fetchxml,
-      appState.config.swimLaneSource,
-      selectedForm ?? appState.selectedForm,
-      appState.metadata,
-      appState.separatorMetadata
+    const data = await fetchData(configState.config.entityName,
+      fetchXml ?? actionState.selectedView.fetchxml,
+      configState.config.swimLaneSource,
+      selectedForm ?? actionState.selectedForm,
+      configState.metadata,
+      configState.separatorMetadata
     );
     appDispatch({ type: "setBoardData", payload: data });
 
-    const secondaryData = await fetchData(appState.config.secondaryEntity.logicalName,
-      secondaryFetchXml ?? appState.selectedSecondaryView.fetchxml,
-      appState.config.secondaryEntity.swimLaneSource,
-      secondarySelectedForm ?? appState.selectedSecondaryForm,
-      appState.secondaryMetadata[appState.config.secondaryEntity.logicalName],
-      appState.secondarySeparatorMetadata,
+    const secondaryData = await fetchData(configState.config.secondaryEntity.logicalName,
+      secondaryFetchXml ?? actionState.selectedSecondaryView.fetchxml,
+      configState.config.secondaryEntity.swimLaneSource,
+      secondarySelectedForm ?? actionState.selectedSecondaryForm,
+      configState.secondaryMetadata[configState.config.secondaryEntity.logicalName],
+      configState.secondarySeparatorMetadata,
       {
         additionalFields: [
-          appState.config.secondaryEntity.parentLookup
+          configState.config.secondaryEntity.parentLookup
         ],
         additionalConditions: [
           {
-            attribute: appState.config.secondaryEntity.parentLookup,
+            attribute: configState.config.secondaryEntity.parentLookup,
             operator: "in",
-            values: data.length > 1 ? data.reduce((all, d) => [...all, ...d.data.map(laneData => laneData[appState.metadata.PrimaryIdAttribute] as string)], [] as Array<string>) : ["00000000-0000-0000-0000-000000000000"]
+            values: data.length > 1 ? data.reduce((all, d) => [...all, ...d.data.map(laneData => laneData[configState.metadata.PrimaryIdAttribute] as string)], [] as Array<string>) : ["00000000-0000-0000-0000-000000000000"]
           }
         ]
       }
@@ -195,13 +212,13 @@ export const refresh = async (appDispatch: Dispatch, appState: AppStateProps, fe
 
     appDispatch({ type: "setSecondaryData", payload: secondaryData });
 
-    appDispatch({ type: "setProgressText", payload: "Fetching notifications" });
-    const notifications = await fetchNotifications();
+    actionDispatch({ type: "setProgressText", payload: "Fetching notifications" });
+    const notifications = await fetchNotifications(configState.config);
     appDispatch({ type: "setNotifications", payload: notifications });
   }
   catch (e) {
     Xrm.Utility.alertDialog(e?.message ?? e, () => {});
   }
 
-  appDispatch({ type: "setProgressText", payload: undefined });
+  actionDispatch({ type: "setProgressText", payload: undefined });
 };
