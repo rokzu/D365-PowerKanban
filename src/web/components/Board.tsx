@@ -315,7 +315,7 @@ export const Board = () => {
         searchText={appliedSearchText}
         subscriptions={appState.subscriptions}
         lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${configState.config.secondaryEntity.parentLookup}_value`] !== r[configState.metadata.PrimaryIdAttribute])))}} />);
-    }, [appState.boardData, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications]);
+    }, [appState.boardData, appState.subscriptions, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications]);
 
   return (
     <div style={{height: "100%"}}>

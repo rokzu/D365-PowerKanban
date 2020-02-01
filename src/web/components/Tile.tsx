@@ -186,7 +186,9 @@ const TileRender = (props: TileProps) => {
         actionDispatch({ type: "setWorkIndicator", payload: false });
     };
 
-    const isSubscribed = useMemo(() => props.subscriptions.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]), [props.subscriptions]);
+    const isSubscribed = useMemo(() => props.subscriptions?.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]), [props.subscriptions]);
+
+    console.log(`Tile ${props.data[props.metadata.PrimaryIdAttribute]} is rerendering`);
 
     return (
         <div ref={drag}>
@@ -198,7 +200,7 @@ const TileRender = (props: TileProps) => {
                     <Dropdown as={ButtonGroup} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}>
                         <Button onClick={showNotifications} variant="outline-secondary">
                             {
-                            <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { props.notifications.length > 0 && <Badge variant="danger">{props.notifications.length}</Badge> }</span>
+                            <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { props.notifications?.length > 0 && <Badge variant="danger">{props.notifications.length}</Badge> }</span>
                             }
                         </Button>
                         <Dropdown.Toggle split variant="outline-secondary" id="dropdown-split-basic" />
@@ -253,6 +255,57 @@ const TileRender = (props: TileProps) => {
     );
 };
 
-TileRender.whyDidYouRender = true;
+export const Tile = React.memo(TileRender, (a, b) => {
+    if (a.borderColor != b.borderColor) {
+        return true;
+    }
 
-export const Tile = React.memo(TileRender);
+    if (a.cardForm != b.cardForm) {
+        return true;
+    }
+
+    if (a.dndType != b.dndType) {
+        return true;
+    }
+
+    if (a.laneOption != b.laneOption) {
+        return true;
+    }
+
+    if (a.metadata != b.metadata) {
+        return true;
+    }
+
+    if (a.searchText != b.searchText) {
+        return true;
+    }
+
+    if (a.style != b.style) {
+        return true;
+    }
+
+    if (a.notifications?.length != b.notifications?.length) {
+        return true;
+    }
+
+    if (a.secondaryData?.length != b.secondaryData?.length) {
+        return true;
+    }
+
+    if (a.subscriptions?.length != b.subscriptions?.length) {
+        return true;
+    }
+
+    if (Object.keys(a.data).length != Object.keys(b.data).length) {
+        return true;
+    }
+
+    if (Object.keys(a.data).some(k => {
+        const value = a.data[k];
+        return b.data[k] !== value;
+    })) {
+        return true;
+    }
+
+    return false;
+});
