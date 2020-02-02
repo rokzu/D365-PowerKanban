@@ -21,7 +21,7 @@ interface LaneProps {
     notifications: {[key: string]: Array<Notification>};
     refresh: () => Promise<void>;
     searchText: string;
-    subscriptions: Array<Subscription>;
+    subscriptions: {[key: string]: Array<Subscription>};
     selectedSecondaryForm?: CardForm;
 }
 
@@ -69,7 +69,7 @@ const LaneRender = (props: LaneProps) => {
                       cardForm={props.cardForm}
                       key={`tile_${d[props.metadata.PrimaryIdAttribute]}`}
                       refresh={props.refresh}
-                      subscriptions={props.subscriptions}
+                      subscriptions={props.subscriptions[d[props.metadata.PrimaryIdAttribute]]}
                       searchText={props.searchText}
                       data={d} />)
                     }

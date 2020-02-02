@@ -19,23 +19,14 @@ export const NotificationList = (props: NotificationListProps) => {
   const [ appState, appDispatch ] = useAppContext();
 
   const notificationRecord = actionState.selectedRecord;
-  const notifications = appState.notifications[actionState.selectedRecord.entityType] ?? [];
+  const notifications = appState.notifications[actionState.selectedRecord.id] ?? [];
   const columns = Array.from(new Set(notifications.reduce((all, cur) => [...all, ...cur.parsed.updatedFields], [] as Array<string>)));
   const eventMeta = actionState.selectedRecord.entityType === configState.config.entityName ? configState.metadata : configState.secondaryMetadata[actionState.selectedRecord.entityType];
 
   useEffect(() => {
     const fetchEventRecord = async() => {
-      const fetch = `<fetch no-lock="true">
-        <entity name="${actionState.selectedRecord.entityType}">
-          ${columns.map(c => `<attribute name="${c}"/>`).join("")}
-          <filter>
-            <condition attribute="${actionState.selectedRecord.entityType}id" operator="eq" value="${actionState.selectedRecord.id}" />
-          </filter>
-        </entity>
-      </fetch>`;
-
-      const { value: data }: { value: Array<any> } = await WebApiClient.Retrieve({ entityName: actionState.selectedRecord.entityType, fetchXml: fetch, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
-      setEventRecord(data[0]);
+      const { value: data }: { value: any } = await WebApiClient.Retrieve({ entityName: actionState.selectedRecord.entityType, entityId: actionState.selectedRecord.id, queryParams: `?$select=${columns.join(",")}`, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
+      setEventRecord(data);
     };
     fetchEventRecord();
   }, []);

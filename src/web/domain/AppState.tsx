@@ -11,7 +11,7 @@ import { FlyOutForm } from "./FlyOutForm";
 
 type Action = { type: "setBoardData", payload: Array<BoardLane> }
     | { type: "setSecondaryData", payload: Array<any> }
-    | { type: "setSubscriptions", payload: Array<Subscription>}
+    | { type: "setSubscriptions", payload: {[key: string]: Array<Subscription>}}
     | { type: "setNotifications", payload: {[key: string]: Array<Notification>}};
 
 export type AppStateDispatch = (action: Action) => void;
@@ -19,7 +19,7 @@ export type AppStateDispatch = (action: Action) => void;
 export type AppStateProps = {
     boardData?: Array<BoardLane>;
     secondaryData?: Array<BoardLane>;
-    subscriptions?: Array<Subscription>;
+    subscriptions?: {[key: string]: Array<Subscription>};
     notifications?: {[key: string]: Array<Notification>};
 };
 

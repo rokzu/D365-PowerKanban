@@ -1,6 +1,7 @@
 {
     "entityName": "incident",
     "notificationLookup": "oss_incidentid",
+    "subscriptionLookup": "oss_incidentid",
     "defaultViewId": "",
     "showCreateButton": true,
     "swimLaneSource": "statuscode",
@@ -8,6 +9,7 @@
     "showDeleteButton": true,
     "showDeactivateButton": true,
     "secondaryEntity": {
+             "subscriptionLookup": "oss_taskid",
              "logicalName": "task",
              "parentLookup": "regardingobjectid",
              "swimLaneSource": "statuscode",

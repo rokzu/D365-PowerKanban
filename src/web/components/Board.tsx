@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl, Badge, InputGroup } from "react-bootstrap";
+import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl, Badge, InputGroup, Spinner } from "react-bootstrap";
 import WebApiClient from "xrm-webapi-client";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
 import { UserInputModal } from "./UserInputModalProps";
@@ -158,7 +158,7 @@ export const Board = () => {
         actionDispatch({ type: "setSelectedForm", payload: defaultForm });
 
         actionDispatch({ type: "setProgressText", payload: "Fetching subscriptions" });
-        const subscriptions = await fetchSubscriptions();
+        const subscriptions = await fetchSubscriptions(config);
         appDispatch({ type: "setSubscriptions", payload: subscriptions });
 
         actionDispatch({ type: "setProgressText", payload: "Fetching notifications" });
@@ -282,6 +282,10 @@ export const Board = () => {
     return refresh(appDispatch, appState, configState, actionDispatch, actionState);
   };
 
+  // Passing of a new object on each render (which we are doing) will cause all advanced data tiles to rerender, since objects are only compared shallowly
+  // Not doing this will make the rerender logic very complex, so we don't do that for now
+  const advancedTileStyle = { margin: "5px" };
+
   const advancedData = React.useMemo(() => {
     return displayState === "advanced" && appState.boardData &&
     appState.boardData.filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State))
@@ -292,13 +296,14 @@ export const Board = () => {
       cardForm={actionState.selectedForm}
       metadata={configState.metadata}
       key={`tile_${d[configState.metadata.PrimaryIdAttribute]}`}
-      style={{ margin: "5px" }}
+      style={advancedTileStyle}
       data={d}
       refresh={refreshBoard}
       searchText={appliedSearchText}
-      subscriptions={appState.subscriptions}
+      subscriptions={!appState.subscriptions ? [] : appState.subscriptions[d[configState.metadata.PrimaryIdAttribute]]}
       selectedSecondaryForm={actionState.selectedSecondaryForm}
       secondaryNotifications={appState.notifications}
+      secondarySubscriptions={appState.subscriptions}
       secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${configState.config.secondaryEntity.parentLookup}_value`] === d[configState.metadata.PrimaryIdAttribute])}))} />)), []);
   }, [displayState, appState.boardData, appState.secondaryData, stateFilters, appliedSearchText, appState.notifications, appState.subscriptions, actionState.selectedSecondaryForm]);
 
@@ -312,8 +317,8 @@ export const Board = () => {
         cardForm={actionState.selectedForm}
         metadata={configState.metadata}
         refresh={refreshBoard}
-        searchText={appliedSearchText}
         subscriptions={appState.subscriptions}
+        searchText={appliedSearchText}
         lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${configState.config.secondaryEntity.parentLookup}_value`] !== r[configState.metadata.PrimaryIdAttribute])))}} />);
     }, [appState.boardData, appState.subscriptions, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications]);
 
@@ -364,7 +369,20 @@ export const Board = () => {
           </Nav>
           <Nav className="pull-right">
             <Button title="Work Indicator" disabled={!actionState.workIndicator} variant="outline-primary">
-              <FontAwesomeIcon spin={!!actionState.workIndicator} icon="spinner" />
+              { !!actionState.workIndicator &&
+                <>
+                  <Spinner animation="grow" size="sm" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                  <span className="sr-only">Loading...</span>
+                </>
+              }
+              { !actionState.workIndicator &&
+                <>
+                  <FontAwesomeIcon icon="circle" />
+                  <span className="sr-only">Idle</span>
+                </>
+              }
             </Button>
             { configState.config && configState.config.showCreateButton && <Button style={{marginLeft: "5px"}}  variant="outline-primary" onClick={newRecord}>Create New</Button> }
             <Button variant="outline-primary" style={{marginLeft: "5px"}} onClick={refreshBoard}>

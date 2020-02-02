@@ -25,6 +25,7 @@ interface TileProps {
     secondaryData?: Array<BoardLane>;
     selectedSecondaryForm?: CardForm;
     secondaryNotifications?: {[key: string]: Array<Notification>};
+    secondarySubscriptions?: {[key: string]: Array<Subscription>};
     borderColor: string;
     style?: React.CSSProperties;
     laneOption?: Option;
@@ -149,7 +150,7 @@ const TileRender = (props: TileProps) => {
             }
         });
 
-        const subscriptions = await fetchSubscriptions();
+        const subscriptions = await fetchSubscriptions(configState.config);
         appDispatch({ type: "setSubscriptions", payload: subscriptions });
         actionDispatch({ type: "setWorkIndicator", payload: false });
     };
@@ -165,7 +166,7 @@ const TileRender = (props: TileProps) => {
             })
         ));
 
-        const subscriptions = await fetchSubscriptions();
+        const subscriptions = await fetchSubscriptions(configState.config);
         appDispatch({ type: "setSubscriptions", payload: subscriptions });
         actionDispatch({ type: "setWorkIndicator", payload: false });
     };
@@ -234,7 +235,7 @@ const TileRender = (props: TileProps) => {
                                 refresh={props.refresh}
                                 notifications={props.secondaryNotifications}
                                 searchText={props.searchText}
-                                subscriptions={props.subscriptions}
+                                subscriptions={props.secondarySubscriptions}
                                 dndType={`${ItemTypes.Tile}_${props.data[props.metadata.PrimaryIdAttribute]}`}
                                 key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px"
                                 cardForm={props.selectedSecondaryForm}
@@ -257,55 +258,55 @@ const TileRender = (props: TileProps) => {
 
 export const Tile = React.memo(TileRender, (a, b) => {
     if (a.borderColor != b.borderColor) {
-        return true;
+        return false;
     }
 
     if (a.cardForm != b.cardForm) {
-        return true;
+        return false;
     }
 
     if (a.dndType != b.dndType) {
-        return true;
+        return false;
     }
 
     if (a.laneOption != b.laneOption) {
-        return true;
+        return false;
     }
 
     if (a.metadata != b.metadata) {
-        return true;
+        return false;
     }
 
     if (a.searchText != b.searchText) {
-        return true;
+        return false;
     }
 
     if (a.style != b.style) {
-        return true;
+        return false;
     }
 
     if (a.notifications?.length != b.notifications?.length) {
-        return true;
+        return false;
     }
 
     if (a.secondaryData?.length != b.secondaryData?.length) {
-        return true;
+        return false;
     }
 
     if (a.subscriptions?.length != b.subscriptions?.length) {
-        return true;
+        return false;
     }
 
     if (Object.keys(a.data).length != Object.keys(b.data).length) {
-        return true;
+        return false;
     }
 
     if (Object.keys(a.data).some(k => {
         const value = a.data[k];
         return b.data[k] !== value;
     })) {
-        return true;
+        return false;
     }
 
-    return false;
+    return true;
 });

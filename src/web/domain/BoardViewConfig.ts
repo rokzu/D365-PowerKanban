@@ -6,6 +6,7 @@ interface SecondaryEntity {
     swimLaneSource: string;
     transitionCallback: () => Promise<any>;
     notificationLookup: string;
+    subscriptionLookup: string;
 }
 
 export interface Context {
@@ -15,6 +16,7 @@ export interface Context {
 export interface BoardViewConfig {
     entityName: string;
     notificationLookup: string;
+    subscriptionLookup: string;
     defaultViewId: string;
     notificationCardFormId: string;
     showCreateButton: boolean;
