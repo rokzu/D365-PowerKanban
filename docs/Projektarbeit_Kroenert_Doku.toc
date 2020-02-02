@@ -1,0 +1,9 @@
+\babel@toc {ngerman}{}
+\babel@toc {ngerman}{}
+\contentsline {section}{Table of images}{I}{section*.1}% 
+\contentsline {section}{Table of listings}{I}{section*.2}% 
+\contentsline {section}{\numberline {1}Ausgangssituation}{1}{section.1}% 
+\contentsline {subsection}{\numberline {1.1}Projekauftraggeber}{1}{subsection.1.1}% 
+\contentsline {subsection}{\numberline {1.2}Kundenwünsche}{1}{subsection.1.2}% 
+\contentsline {subsection}{\numberline {1.3}Projektziele}{1}{subsection.1.3}% 
+\contentsline {subsection}{\numberline {1.4}Projektumfeld, Prozessschnittstellen, Ansprechpartner}{1}{subsection.1.4}% 

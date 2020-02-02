@@ -1,0 +1,79 @@
+\documentclass[10pt,a4paper, twoside]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{amsmath}
+\usepackage{subcaption}
+\usepackage{marvosym}
+\usepackage{eurosym}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{lstautogobble}
+\usepackage[inner=2.5cm, outer=1.5cm, top=3cm, bottom=3cm]{geometry}
+\usepackage{amsfonts}
+\usepackage{lstautogobble}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{wrapfig}
+\usepackage{pdfpages}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\selectlanguage{ngerman}
+\pagestyle{fancy}
+\lhead{Florian Krönert}
+\chead{Projektarbeit}
+\rhead{18.05.15 - 29.05.15}
+\title{Projektarbeit}
+\date{18.05.15 - 29.05.15}
+\author{Florian Krönert}
+\begin{document}
+% Deckblatt
+\input{D365-PowerKanban-Inlay.tex}
+\thispagestyle{empty}
+\cleardoublepage
+\pagenumbering{Roman}
+% Inhaltsverzeichnis
+\tableofcontents{}
+\addcontentsline{toc}{section}{Table of images}
+\listoffigures
+\addcontentsline{toc}{section}{Table of listings}
+\listoftables
+\newpage
+\pagenumbering{arabic}
+% Inhalt
+\section{Ausgangssituation}
+\subsection{Projekauftraggeber}
+Der Auftraggeber des Projekts ist die KUMAVISION AG (im Folgenden KVS).
+Die KVS ist ein mittelständisches Unternehmen, dessen Hauptsitz in Markdorf ist.
+Sie besteht aus 15 Standorten in D - A - CH und hat sich auf Microsoft Dynamics spezialisiert.
+Als Microsoft Gold Partner führt die KVS im Rahmen von Projekten bei Kunden Dynamics NAV und Dynamics CRM ein.\\[1ex]
+Die KVS wünscht sich die Integration einer Anwendung zur Erstellung von Setups in ihr Buildsystem, um statt der rohen Ausgabedateien des Buildprozesses Setups ausgeben zu können.
+Zu diesem Zweck hat die KVS sich für das Open Source Framework "`WiX"' (Windows Installer XML) entschieden. 
+\subsection{Kundenwünsche}
+Die KVS benutzt TeamCity als Continuous Integration und wünscht sich daher, dass WiX in den Buildprozess von Projekten auf TeamCity eingebunden wird.
+Des Weiteren wird für das Bauen der Projekte "`FAKE - F\# Make"', ein Open Source Projekt, benutzt.
+Mittels FAKE werden Skripte in F\#, einer funktionalen Programmiersprache, geschrieben, sodass der Buildprozess dynamisch und gut anpassbar ist.\\[1ex]
+Es gibt die Möglichkeiten, WiX entweder als Nachbearbeitungsschritt in TeamCity einzubinden, oder direkt in FAKE zu integrieren.
+Die KVS wünscht sich jedoch, dass WiX direkt in FAKE integriert wird.
+Als Ausgabeformat für die Setupdateien wird das .msi Format (Microsoft Software Installation) gewünscht, da es sich hierbei um das Standardformat von Microsoft handelt.
+Es muss auch gewährleistet werden, dass sich die Installationspakete so erstellen lassen, dass ein einfaches Upgrade von Version zu Version möglich ist, da mit diesen Paketen später die Software der KVS (wie zum Beispiel Standalone Dienste) beim Kunden installiert und aktualisiert wird.
+Bei der Erstellung von Setups ist wichtig, dass die Lizenzkosten möglichst gering sind, Kommandozeilenfunktionalität gegeben ist und automatisiert Versionen gesetzt werden können.
+Da WiX diese Anforderungen vollständig erfüllt, fiel die Entscheidung hierauf.
+Der Wunsch der KVS im Rahmen des Projekts ist eine Referenzimplementierung von WiX in Kombination mit FAKE, sowie gegebenenfalls Anpassungen an der aktuellen WiX Unterstützung von FAKE, um mögliche aktuelle Probleme in der Integration zu beseitigen und es anderen Entwicklern später zu erleichtern, für andere Projekte mittels WiX und FAKE Setups zu erstellen.
+\subsection{Projektziele}
+Das Ziel des Projekts ist die Verbesserung der WiX Integration von FAKE, sowie die Implementierung von WiX in ein internes Projekt, sodass dieses als Referenzimplementierung von WiX innerhalb der KVS gesehen werden kann.
+Die Implementierung soll mittels FAKE Skript erfolgen, dieses wird in F\# geschrieben.
+Beim aktuellen Stand der Integration müssen Entwickler sowohl die XML Definition von WiX, als auch das Buildscript anpassen.
+Um die Integration zu erleichtern, soll daher das XML abstrahiert werden, sodass Entwickler später keine XML mehr anpassen müssen, sondern nur in FAKE die Parameter für WiX definieren.
+Die Referenzimplementierung soll in der Lage sein, mittels TopShelf Dienste als Nachinstallationstrigger zu installieren, Unterstützung für das Upgraden der Installation beinhalten und die installierten Dienste bei einer Deinstallation wieder deinstallieren.
+Beim Upgrade einer Installation sollen zudem die Konfigurationsdateien nicht überschrieben werden.
+Beim Erstellen dieses Projekts in TeamCity soll abschließend ein Setup im .msi Format angeboten werden.
+\subsection{Projektumfeld, Prozessschnittstellen, Ansprechpartner}
+Verschiedene Ansprechpartner aus meiner Abteilung haben das Projekt begleitet und standen bei Fragen oder Problemen zur Verfügung.
+Das Projekt fand an meinem normalen Arbeitsplatz in der KVS statt.\\[1ex]
+Die Ansprechpartner waren:
+\begin{itemize}
+\item Christoph Keller, Teamleiter und Ausbilder
+\item Wolfgang Heckewald, Schnittstellenexperte und Qualitätssicherung
+\end{itemize}
+\end{document}
