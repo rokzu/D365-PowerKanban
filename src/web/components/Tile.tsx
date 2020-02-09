@@ -218,8 +218,13 @@ const TileRender = (props: TileProps) => {
                             <Dropdown.Item as="button" onClick={unsubscribe}><FontAwesomeIcon icon="bell-slash" /> Unsubscribe</Dropdown.Item>
                             <Dropdown.Item as="button" onClick={clearNotifications}><FontAwesomeIcon icon="eye-slash" /> Mark as read</Dropdown.Item>
                             <Dropdown.Item as="button" onClick={showNotifications}><FontAwesomeIcon icon="eye" /> Show notifications</Dropdown.Item>
-                            <Dropdown.Divider></Dropdown.Divider>
-                            { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={() => triggerCallBack(b.callBack)}>{b.label}</Dropdown.Item>) }
+                            {
+                                props.config.customButtons && props.config.customButtons.length &&
+                                <>
+                                    <Dropdown.Divider></Dropdown.Divider>
+                                    { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={() => triggerCallBack(b.callBack)}>{b.label}</Dropdown.Item>) }
+                                </>
+                            }
                         </Dropdown.Menu>
                     </Dropdown>
                     <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
