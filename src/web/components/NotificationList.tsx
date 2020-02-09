@@ -21,7 +21,7 @@ export const NotificationList = (props: NotificationListProps) => {
   const notificationRecord = actionState.selectedRecord;
   const notifications = appState.notifications[actionState.selectedRecord.id] ?? [];
   const columns = Array.from(new Set(notifications.reduce((all, cur) => [...all, ...cur.parsed.updatedFields], [] as Array<string>)));
-  const eventMeta = actionState.selectedRecord.entityType === configState.config.entityName ? configState.metadata : configState.secondaryMetadata[actionState.selectedRecord.entityType];
+  const eventMeta = actionState.selectedRecord.entityType === configState.config.primaryEntity.logicalName ? configState.metadata : configState.secondaryMetadata[actionState.selectedRecord.entityType];
 
   useEffect(() => {
     const fetchEventRecord = async() => {

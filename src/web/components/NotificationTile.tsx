@@ -24,7 +24,7 @@ const NotificationTileRender = (props: NotificationTileProps) => {
     const metadata = configState.secondaryMetadata["oss_notification"];
     const eventRecord = props.data.parsed.eventRecordReference;
 
-    const eventMeta = eventRecord.LogicalName === configState.config.entityName ? configState.metadata : configState.secondaryMetadata[eventRecord.LogicalName];
+    const eventMeta = eventRecord.LogicalName === configState.config.primaryEntity.logicalName ? configState.metadata : configState.secondaryMetadata[eventRecord.LogicalName];
 
     const clearNotification = async () => {
         actionDispatch({ type: "setWorkIndicator", payload: true });

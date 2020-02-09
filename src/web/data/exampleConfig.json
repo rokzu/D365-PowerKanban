@@ -1,20 +1,23 @@
 {
-    "entityName": "incident",
-    "notificationLookup": "oss_incidentid",
-    "subscriptionLookup": "oss_incidentid",
+    "primaryEntity": {
+        "allowTransitions": true,
+        "logicalName": "incident",
+        "notificationLookup": "oss_incidentid",
+        "subscriptionLookup": "oss_incidentid",
+        "swimLaneSource": "statuscode",
+        "transitionCallback": "boardViewExtender.onStateTransition"
+    },
     "defaultViewId": "",
     "showCreateButton": true,
-    "swimLaneSource": "statuscode",
-    "allowTransitions": true,
     "showDeleteButton": true,
     "showDeactivateButton": true,
     "secondaryEntity": {
-             "subscriptionLookup": "oss_taskid",
-             "logicalName": "task",
-             "parentLookup": "regardingobjectid",
-             "swimLaneSource": "statuscode",
-             "notificationLookup": "oss_taskid"
+        "allowTransitions": true,
+        "logicalName": "task",
+        "notificationLookup": "oss_taskid",
+        "parentLookup": "regardingobjectid",
+        "subscriptionLookup": "oss_taskid",
+        "swimLaneSource": "statuscode"
     },
-    "customScriptUrl": "/WebResources/oss_/D365BoardView/js/exampleExternalScript.js",
-    "transitionCallback": "boardViewExtender.onStateTransition"
+    "customScriptUrl": "/WebResources/oss_/D365BoardView/js/exampleExternalScript.js"
 }

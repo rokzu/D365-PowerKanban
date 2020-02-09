@@ -1,30 +1,41 @@
 import { FlyOutForm } from "./FlyOutForm";
 
-interface SecondaryEntity {
+export interface CustomButton {
+    id: string;
+    icon: string;
+    label: string;
+    callBack: string;
+}
+
+export interface BoardEntity {
     logicalName: string;
-    parentLookup: string;
     swimLaneSource: string;
-    transitionCallback: () => Promise<any>;
+    transitionCallback: string;
     notificationLookup: string;
     subscriptionLookup: string;
+    allowTransitions: boolean;
+    customButtons: Array<CustomButton>;
+}
+
+export interface SecondaryEntity extends BoardEntity {
+    parentLookup: string;
 }
 
 export interface Context {
     showForm: (form: FlyOutForm) => Promise<any>;
 }
 
+export interface PrimaryEntity extends BoardEntity {
+
+}
+
 export interface BoardViewConfig {
-    entityName: string;
-    notificationLookup: string;
-    subscriptionLookup: string;
     defaultViewId: string;
     notificationCardFormId: string;
     showCreateButton: boolean;
-    swimLaneSource: string;
-    allowTransitions: boolean;
     showDeleteButton: boolean;
     showDeactivateButton: boolean;
+    primaryEntity: PrimaryEntity;
     secondaryEntity: SecondaryEntity;
     customScriptUrl: string;
-    transitionCallback: string;
 }

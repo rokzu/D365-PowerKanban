@@ -13,27 +13,29 @@ import WebApiClient from "xrm-webapi-client";
 import { useDrag, DragSourceMonitor } from "react-dnd";
 import { FlyOutForm } from "../domain/FlyOutForm";
 import { Notification } from "../domain/Notification";
-import { BoardViewConfig } from "../domain/BoardViewConfig";
+import { BoardViewConfig, PrimaryEntity, BoardEntity } from "../domain/BoardViewConfig";
 import { Subscription } from "../domain/Subscription";
 import { useConfigState } from "../domain/ConfigState";
 import { useActionContext, DisplayType, useActionDispatch } from "../domain/ActionState";
 
 interface TileProps {
-    data: any;
-    metadata: Metadata;
+    borderColor: string;
     cardForm: CardForm;
+    config: BoardEntity;
+    data: any;
+    dndType?: string;
+    laneOption?: Option;
+    metadata: Metadata;
+    notifications: Array<Notification>;
+    searchText: string;
     secondaryData?: Array<BoardLane>;
-    selectedSecondaryForm?: CardForm;
     secondaryNotifications?: {[key: string]: Array<Notification>};
     secondarySubscriptions?: {[key: string]: Array<Subscription>};
-    borderColor: string;
+    selectedSecondaryForm?: CardForm;
+    separatorMetadata: Attribute;
     style?: React.CSSProperties;
-    laneOption?: Option;
-    dndType?: string;
-    notifications: Array<Notification>;
-    refresh: () => Promise<void>;
     subscriptions: Array<Subscription>;
-    searchText: string;
+    refresh: () => Promise<void>;
 }
 
 const TileRender = (props: TileProps) => {
@@ -42,6 +44,8 @@ const TileRender = (props: TileProps) => {
     const actionDispatch = useActionDispatch();
 
     const secondaryMetadata = configState.secondaryMetadata[configState.config.secondaryEntity.logicalName];
+    const secondaryConfig = configState.config.secondaryEntity;
+    const secondarySeparator = configState.secondarySeparatorMetadata;
 
     const [{ isDragging }, drag] = useDrag({
         item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile },
@@ -53,9 +57,9 @@ const TileRender = (props: TileProps) => {
                     return;
                 }
 
-                let preventDefault = true;
+                let preventDefault = false;
 
-                if (configState.config.transitionCallback) {
+                if (props.config.transitionCallback) {
                     const context = {
                         showForm: (form: FlyOutForm) => {
                             return new Promise((resolve, reject) => {
@@ -70,7 +74,7 @@ const TileRender = (props: TileProps) => {
                         WebApiClient: WebApiClient
                     };
 
-                    const path = configState.config.transitionCallback.split(".");
+                    const path = props.config.transitionCallback.split(".");
                     const funcRef = path.reduce((all, cur) => !all ? undefined : (all as any)[cur], window);
 
                     const result = await Promise.resolve(funcRef(context));
@@ -85,9 +89,9 @@ const TileRender = (props: TileProps) => {
                     actionDispatch({ type: "setWorkIndicator", payload: true });
                     const itemId = item.id;
                     const targetOption = dropResult.option as Option;
-                    const update: any = { [configState.separatorMetadata.LogicalName]: targetOption.Value };
+                    const update: any = { [props.separatorMetadata.LogicalName]: targetOption.Value };
 
-                    if (configState.separatorMetadata.LogicalName === "statuscode") {
+                    if (props.separatorMetadata.LogicalName === "statuscode") {
                         update["statecode"] = targetOption.State;
                     }
 
@@ -187,6 +191,10 @@ const TileRender = (props: TileProps) => {
         actionDispatch({ type: "setWorkIndicator", payload: false });
     };
 
+    const triggerCallBack = (identifier: string) => {
+
+    };
+
     const isSubscribed = useMemo(() => props.subscriptions?.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]), [props.subscriptions]);
 
     console.log(`Tile ${props.data[props.metadata.PrimaryIdAttribute]} is rerendering`);
@@ -210,6 +218,8 @@ const TileRender = (props: TileProps) => {
                             <Dropdown.Item as="button" onClick={unsubscribe}><FontAwesomeIcon icon="bell-slash" /> Unsubscribe</Dropdown.Item>
                             <Dropdown.Item as="button" onClick={clearNotifications}><FontAwesomeIcon icon="eye-slash" /> Mark as read</Dropdown.Item>
                             <Dropdown.Item as="button" onClick={showNotifications}><FontAwesomeIcon icon="eye" /> Show notifications</Dropdown.Item>
+                            <Dropdown.Divider></Dropdown.Divider>
+                            { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={() => triggerCallBack(b.callBack)}>{b.label}</Dropdown.Item>) }
                         </Dropdown.Menu>
                     </Dropdown>
                     <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
@@ -240,7 +250,9 @@ const TileRender = (props: TileProps) => {
                                 key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px"
                                 cardForm={props.selectedSecondaryForm}
                                 metadata={secondaryMetadata}
-                                lane={d} />)
+                                lane={d}
+                                config={secondaryConfig}
+                                separatorMetadata={secondarySeparator} />)
                             }
                         </div>
                     </div>

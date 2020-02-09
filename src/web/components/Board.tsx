@@ -94,9 +94,9 @@ export const Board = () => {
 
         actionDispatch({ type: "setProgressText", payload: "Fetching meta data" });
 
-        const metadata = await fetchMetadata(config.entityName);
-        const attributeMetadata = await fetchSeparatorMetadata(config.entityName, config.swimLaneSource, metadata);
-        const stateMetadata = await fetchSeparatorMetadata(config.entityName, "statecode", metadata);
+        const metadata = await fetchMetadata(config.primaryEntity.logicalName);
+        const attributeMetadata = await fetchSeparatorMetadata(config.primaryEntity.logicalName, config.primaryEntity.swimLaneSource, metadata);
+        const stateMetadata = await fetchSeparatorMetadata(config.primaryEntity.logicalName, "statecode", metadata);
 
         const notificationMetadata = await fetchMetadata("oss_notification");
         configDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
@@ -118,7 +118,7 @@ export const Board = () => {
         configDispatch({ type: "setStateMetadata", payload: stateMetadata });
         actionDispatch({ type: "setProgressText", payload: "Fetching views" });
 
-        const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.entityName}' and querytype eq 0`});
+        const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.primaryEntity.logicalName}' and querytype eq 0`});
         setViews(views);
 
         let defaultSecondaryView;
@@ -135,7 +135,7 @@ export const Board = () => {
         actionDispatch({ type: "setSelectedView", payload: defaultView });
         actionDispatch({ type: "setProgressText", payload: "Fetching forms" });
 
-        const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.entityName}' and type eq 11`});
+        const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.primaryEntity.logicalName}' and type eq 11`});
         const processedForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
         setCardForms(processedForms);
 
@@ -167,7 +167,7 @@ export const Board = () => {
 
         actionDispatch({ type: "setProgressText", payload: "Fetching data" });
 
-        const data = await fetchData(config.entityName, defaultView.fetchxml, config.swimLaneSource, defaultForm, metadata, attributeMetadata);
+        const data = await fetchData(config.primaryEntity.logicalName, defaultView.fetchxml, config.primaryEntity.swimLaneSource, defaultForm, metadata, attributeMetadata);
 
         if (config.secondaryEntity) {
           const secondaryData = await fetchData(config.secondaryEntity.logicalName,
@@ -206,7 +206,7 @@ export const Board = () => {
   };
 
   const newRecord = async () => {
-    const result = await Xrm.Navigation.openForm({ entityName: configState.config.entityName, useQuickCreateForm: true }, undefined);
+    const result = await Xrm.Navigation.openForm({ entityName: configState.config.primaryEntity.logicalName, useQuickCreateForm: true }, undefined);
 
     if (result && result.savedEntityReference) {
       refreshBoard();
@@ -304,6 +304,8 @@ export const Board = () => {
       selectedSecondaryForm={actionState.selectedSecondaryForm}
       secondaryNotifications={appState.notifications}
       secondarySubscriptions={appState.subscriptions}
+      config={configState.config.primaryEntity}
+      separatorMetadata={configState.separatorMetadata}
       secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${configState.config.secondaryEntity.parentLookup}_value`] === d[configState.metadata.PrimaryIdAttribute])}))} />)), []);
   }, [displayState, appState.boardData, appState.secondaryData, stateFilters, appliedSearchText, appState.notifications, appState.subscriptions, actionState.selectedSecondaryForm]);
 
@@ -319,6 +321,8 @@ export const Board = () => {
         refresh={refreshBoard}
         subscriptions={appState.subscriptions}
         searchText={appliedSearchText}
+        config={configState.config.primaryEntity}
+        separatorMetadata={configState.separatorMetadata}
         lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${configState.config.secondaryEntity.parentLookup}_value`] !== r[configState.metadata.PrimaryIdAttribute])))}} />);
     }, [appState.boardData, appState.subscriptions, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications]);
 
@@ -350,7 +354,7 @@ export const Board = () => {
                 </DropdownButton>
               </>
             }
-            { configState.config?.swimLaneSource === "statuscode" &&
+            { configState.config?.primaryEntity.swimLaneSource === "statuscode" &&
               <DropdownButton variant="outline-primary" id="formSelector" title={stateFilters.length ? stateFilters.map(f => f.Label.UserLocalizedLabel.Label).join("|") : "All states"} style={{marginLeft: "5px"}}>
                 { configState.stateMetadata?.OptionSet.Options.map(o => <Dropdown.Item onClick={setStateFilter} as="button" id={o.Value} key={o.Value}>{o.Label.UserLocalizedLabel.Label}</Dropdown.Item>) }
               </DropdownButton>

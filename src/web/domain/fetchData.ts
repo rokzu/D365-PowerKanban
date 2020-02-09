@@ -166,7 +166,7 @@ export const fetchSubscriptions = async (config: BoardViewConfig) => {
     returnAllPages: true
   });
 
-  return groupDataByProperty(config.subscriptionLookup, config.secondaryEntity.subscriptionLookup, data);
+  return groupDataByProperty(config.primaryEntity.subscriptionLookup, config.secondaryEntity.subscriptionLookup, data);
 };
 
 export const fetchNotifications = async (config: BoardViewConfig): Promise<{[key: string]: Array<Notification>}> => {
@@ -179,16 +179,16 @@ export const fetchNotifications = async (config: BoardViewConfig): Promise<{[key
 
   const notifications: Array<Notification> = data.map((d: Notification) => ({...d, parsed: d.oss_data ? JSON.parse(d.oss_data) : undefined }));
 
-  return groupDataByProperty(config.notificationLookup, config.secondaryEntity.notificationLookup, notifications);
+  return groupDataByProperty(config.primaryEntity.notificationLookup, config.secondaryEntity.notificationLookup, notifications);
 };
 
 export const refresh = async (appDispatch: AppStateDispatch, appState: AppStateProps, configState: ConfigStateProps, actionDispatch: ActionDispatch, actionState: ActionStateProps, fetchXml?: string, selectedForm?: CardForm, secondaryFetchXml?: string, secondarySelectedForm?: CardForm) => {
   actionDispatch({ type: "setProgressText", payload: "Fetching data" });
 
   try {
-    const data = await fetchData(configState.config.entityName,
+    const data = await fetchData(configState.config.primaryEntity.logicalName,
       fetchXml ?? actionState.selectedView.fetchxml,
-      configState.config.swimLaneSource,
+      configState.config.primaryEntity.swimLaneSource,
       selectedForm ?? actionState.selectedForm,
       configState.metadata,
       configState.separatorMetadata

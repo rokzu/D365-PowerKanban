@@ -9,20 +9,22 @@ import { useDrop } from "react-dnd";
 import { ItemTypes } from "../domain/ItemTypes";
 import { Option } from "../domain/Metadata";
 import { Notification } from "../domain/Notification";
-import { BoardViewConfig } from "../domain/BoardViewConfig";
+import { BoardViewConfig, BoardEntity } from "../domain/BoardViewConfig";
 import { Subscription } from "../domain/Subscription";
 
 interface LaneProps {
+    config: BoardEntity;
+    cardForm: CardForm;
+    dndType?: string;
     lane: BoardLane;
     metadata: Metadata;
-    cardForm: CardForm;
     minWidth?: string;
-    dndType?: string;
     notifications: {[key: string]: Array<Notification>};
     refresh: () => Promise<void>;
     searchText: string;
-    subscriptions: {[key: string]: Array<Subscription>};
     selectedSecondaryForm?: CardForm;
+    separatorMetadata: Attribute;
+    subscriptions: {[key: string]: Array<Subscription>};
 }
 
 const LaneRender = (props: LaneProps) => {
@@ -71,7 +73,9 @@ const LaneRender = (props: LaneProps) => {
                       refresh={props.refresh}
                       subscriptions={props.subscriptions[d[props.metadata.PrimaryIdAttribute]]}
                       searchText={props.searchText}
-                      data={d} />)
+                      data={d}
+                      config={props.config}
+                      separatorMetadata={props.separatorMetadata} />)
                     }
                 </Card.Body>
             </Card>
