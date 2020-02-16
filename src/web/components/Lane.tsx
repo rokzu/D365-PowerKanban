@@ -62,7 +62,7 @@ const LaneRender = (props: LaneProps) => {
             <Card style={{borderColor: "#d8d8d8", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
                 <Card.Body>
                     <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
-                    { props.lane.data.map(d => <Tile
+                    { props.cardForm && props.lane.data.map(d => <Tile
                       notifications={props.notifications[d[props.metadata.PrimaryIdAttribute]] ?? []}
                       dndType={props.dndType}
                       laneOption={props.lane.option}

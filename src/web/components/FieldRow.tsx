@@ -54,7 +54,7 @@ const FieldRowRender = (props: FieldRowProps) => {
     if (props.type === "header") {
         return (
             <div style={{ display: "flex", flexDirection: "row" }}>
-                { rows.map(([c, data], i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ data }</div>) }
+                { rows.map(([c, data], i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field)?.DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ data }</div>) }
             </div>
         );
     }
@@ -63,7 +63,7 @@ const FieldRowRender = (props: FieldRowProps) => {
         return (
             <div style={{ display: "flex", flexDirection: "column" }}>
                 { rows.map(([c, data], i) => {
-                    return (<div key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }<span style={{float: "right", color: "#666666"}}>{props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label}</span></div>);
+                    return (<div key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }<span style={{float: "right", color: "#666666"}}>{props.metadata.Attributes?.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label}</span></div>);
                  })
                 }
             </div>
@@ -72,7 +72,7 @@ const FieldRowRender = (props: FieldRowProps) => {
 
     return (
         <div style={{ display: "flex", flexDirection: "column" }}>
-            { rows.map(([c, data], i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field).DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }</div>) }
+            { rows.map(([c, data], i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field)?.DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`}>{ data }</div>) }
         </div>
     );
 };

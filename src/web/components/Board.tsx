@@ -74,129 +74,145 @@ export const Board = () => {
   const [ searchText, setSearch] = useState("");
   const [ appliedSearchText, setAppliedSearch ] = useState(undefined);
 
-  useEffect(() => {
-    async function initializeConfig() {
-      try {
-        const userId = formatGuid(Xrm.Page.context.getUserId());
-
-        actionDispatch({ type: "setProgressText", payload: "Retrieving user settings" });
-
-        const user = await WebApiClient.Retrieve({ entityName: "systemuser", entityId: userId, queryParams: "?$select=oss_defaultboardid"});
-
-        actionDispatch({ type: "setProgressText", payload: "Fetching configuration" });
-
-        const config = await fetchConfig(user.oss_defaultboardid);
-
-        if (config.customScriptUrl) {
-          actionDispatch({ type: "setProgressText", payload: "Loading custom scripts" });
-          await loadExternalScript(config.customScriptUrl);
-        }
-
-        actionDispatch({ type: "setProgressText", payload: "Fetching meta data" });
-
-        const metadata = await fetchMetadata(config.primaryEntity.logicalName);
-        const attributeMetadata = await fetchSeparatorMetadata(config.primaryEntity.logicalName, config.primaryEntity.swimLaneSource, metadata);
-        const stateMetadata = await fetchSeparatorMetadata(config.primaryEntity.logicalName, "statecode", metadata);
-
-        const notificationMetadata = await fetchMetadata("oss_notification");
-        configDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
-
-        let secondaryMetadata: Metadata;
-        let secondaryAttributeMetadata: Attribute;
-
-        if (config.secondaryEntity) {
-          secondaryMetadata = await fetchMetadata(config.secondaryEntity.logicalName);
-          secondaryAttributeMetadata = await fetchSeparatorMetadata(config.secondaryEntity.logicalName, config.secondaryEntity.swimLaneSource, secondaryMetadata);
-
-          configDispatch({ type: "setSecondaryMetadata", payload: { entity: config.secondaryEntity.logicalName, data: secondaryMetadata } });
-          configDispatch({ type: "setSecondarySeparatorMetadata", payload: secondaryAttributeMetadata });
-        }
-
-        configDispatch({ type: "setConfig", payload: config });
-        configDispatch({ type: "setMetadata", payload: metadata });
-        configDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
-        configDispatch({ type: "setStateMetadata", payload: stateMetadata });
-        actionDispatch({ type: "setProgressText", payload: "Fetching views" });
-
-        const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.primaryEntity.logicalName}' and querytype eq 0`});
-        setViews(views);
-
-        let defaultSecondaryView;
-        if (config.secondaryEntity) {
-          const { value: secondaryViews} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.secondaryEntity.logicalName}' and querytype eq 0`});
-          setSecondaryViews(secondaryViews);
-          defaultSecondaryView = secondaryViews[0];
-
-          actionDispatch({ type: "setSelectedSecondaryView", payload: defaultSecondaryView });
-        }
-
-        const defaultView = views[0];
-
-        actionDispatch({ type: "setSelectedView", payload: defaultView });
-        actionDispatch({ type: "setProgressText", payload: "Fetching forms" });
-
-        const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.primaryEntity.logicalName}' and type eq 11`});
-        const processedForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
-        setCardForms(processedForms);
-
-        const { value: notificationForms } = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq 'oss_notification' and type eq 11`});
-        const processedNotificationForms = notificationForms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
-        configDispatch({ type: "setNotificationForm", payload: processedNotificationForms[0] });
-
-        let defaultSecondaryForm;
-        if (config.secondaryEntity) {
-          const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.secondaryEntity.logicalName}' and type eq 11`});
-          const processedSecondaryForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
-          setSecondaryCardForms(processedSecondaryForms);
-
-          defaultSecondaryForm = processedSecondaryForms[0];
-          actionDispatch({ type: "setSelectedSecondaryForm", payload: defaultSecondaryForm });
-        }
-
-        const defaultForm = processedForms[0];
-
-        actionDispatch({ type: "setSelectedForm", payload: defaultForm });
-
-        actionDispatch({ type: "setProgressText", payload: "Fetching subscriptions" });
-        const subscriptions = await fetchSubscriptions(config);
-        appDispatch({ type: "setSubscriptions", payload: subscriptions });
-
-        actionDispatch({ type: "setProgressText", payload: "Fetching notifications" });
-        const notifications = await fetchNotifications(config);
-        appDispatch({ type: "setNotifications", payload: notifications });
-
-        actionDispatch({ type: "setProgressText", payload: "Fetching data" });
-
-        const data = await fetchData(config.primaryEntity.logicalName, defaultView.fetchxml, config.primaryEntity.swimLaneSource, defaultForm, metadata, attributeMetadata);
-
-        if (config.secondaryEntity) {
-          const secondaryData = await fetchData(config.secondaryEntity.logicalName,
-            defaultSecondaryView.fetchxml,
-            config.secondaryEntity.swimLaneSource,
-            defaultSecondaryForm, secondaryMetadata,
-            secondaryAttributeMetadata,
-            {
-              additionalFields: [ config.secondaryEntity.parentLookup ],
-              additionalConditions: [{
-                attribute: config.secondaryEntity.parentLookup,
-                operator: "in",
-                values: data.length > 1 ? data.reduce((all, d) => [...all, ...d.data.map(laneData => laneData[metadata.PrimaryIdAttribute] as string)], [] as Array<string>) : ["00000000-0000-0000-0000-000000000000"]
-              }]
-            }
-          );
-          appDispatch({ type: "setSecondaryData", payload: secondaryData });
-        }
-
-        appDispatch({ type: "setBoardData", payload: data });
-        actionDispatch({ type: "setProgressText", payload: undefined });
-      }
-      catch (e) {
-        Xrm.Utility.alertDialog(e?.message ?? e, () => {});
-      }
+  const getConfigId = async () => {
+    if (configState.configId) {
+      return configState.configId;
     }
 
+    const userId = formatGuid(Xrm.Page.context.getUserId());
+    const user = await WebApiClient.Retrieve({ entityName: "systemuser", entityId: userId, queryParams: "?$select=oss_defaultboardid"});
+
+    return user.oss_defaultboardid;
+  };
+
+  const initializeConfig = async () => {
+    try {
+      const configId = await getConfigId();
+
+      if (!configId) {
+        actionDispatch({ type: "setConfigSelectorDisplayState", payload: true });
+        return;
+      }
+
+      actionDispatch({ type: "setProgressText", payload: "Fetching configuration" });
+      const config = await fetchConfig(configId);
+
+      if (config.customScriptUrl) {
+        actionDispatch({ type: "setProgressText", payload: "Loading custom scripts" });
+        await loadExternalScript(config.customScriptUrl);
+      }
+
+      actionDispatch({ type: "setProgressText", payload: "Fetching meta data" });
+
+      const metadata = await fetchMetadata(config.primaryEntity.logicalName);
+      const attributeMetadata = await fetchSeparatorMetadata(config.primaryEntity.logicalName, config.primaryEntity.swimLaneSource, metadata);
+      const stateMetadata = await fetchSeparatorMetadata(config.primaryEntity.logicalName, "statecode", metadata);
+
+      const notificationMetadata = await fetchMetadata("oss_notification");
+      configDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
+
+      let secondaryMetadata: Metadata;
+      let secondaryAttributeMetadata: Attribute;
+
+      if (config.secondaryEntity) {
+        secondaryMetadata = await fetchMetadata(config.secondaryEntity.logicalName);
+        secondaryAttributeMetadata = await fetchSeparatorMetadata(config.secondaryEntity.logicalName, config.secondaryEntity.swimLaneSource, secondaryMetadata);
+
+        configDispatch({ type: "setSecondaryMetadata", payload: { entity: config.secondaryEntity.logicalName, data: secondaryMetadata } });
+        configDispatch({ type: "setSecondarySeparatorMetadata", payload: secondaryAttributeMetadata });
+      }
+
+      configDispatch({ type: "setConfig", payload: config });
+      configDispatch({ type: "setMetadata", payload: metadata });
+      configDispatch({ type: "setSeparatorMetadata", payload: attributeMetadata });
+      configDispatch({ type: "setStateMetadata", payload: stateMetadata });
+      actionDispatch({ type: "setProgressText", payload: "Fetching views" });
+
+      const { value: views} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.primaryEntity.logicalName}' and querytype eq 0`});
+      setViews(views);
+
+      let defaultSecondaryView;
+      if (config.secondaryEntity) {
+        const { value: secondaryViews} = await WebApiClient.Retrieve({entityName: "savedquery", queryParams: `?$select=layoutxml,fetchxml,savedqueryid,name&$filter=returnedtypecode eq '${config.secondaryEntity.logicalName}' and querytype eq 0`});
+        setSecondaryViews(secondaryViews);
+        defaultSecondaryView = secondaryViews[0];
+
+        actionDispatch({ type: "setSelectedSecondaryView", payload: defaultSecondaryView });
+      }
+
+      const defaultView = views[0];
+
+      actionDispatch({ type: "setSelectedView", payload: defaultView });
+      actionDispatch({ type: "setProgressText", payload: "Fetching forms" });
+
+      const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.primaryEntity.logicalName}' and type eq 11`});
+      const processedForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
+      setCardForms(processedForms);
+
+      const { value: notificationForms } = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq 'oss_notification' and type eq 11`});
+      const processedNotificationForms = notificationForms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
+      configDispatch({ type: "setNotificationForm", payload: processedNotificationForms[0] });
+
+      let defaultSecondaryForm;
+      if (config.secondaryEntity) {
+        const { value: forms} = await WebApiClient.Retrieve({entityName: "systemform", queryParams: `?$select=formxml,name&$filter=objecttypecode eq '${config.secondaryEntity.logicalName}' and type eq 11`});
+        const processedSecondaryForms = forms.map((f: any) => ({ ...f, parsed: parseCardForm(f) }));
+        setSecondaryCardForms(processedSecondaryForms);
+
+        defaultSecondaryForm = processedSecondaryForms[0];
+        actionDispatch({ type: "setSelectedSecondaryForm", payload: defaultSecondaryForm });
+      }
+
+      const defaultForm = processedForms[0];
+
+      if (!defaultForm) {
+        actionDispatch({ type: "setProgressText", payload: undefined });
+        return Xrm.Utility.alertDialog(`Did not find any card forms for ${config.primaryEntity.logicalName}, please create one.`, () => {});
+      }
+
+      actionDispatch({ type: "setSelectedForm", payload: defaultForm });
+
+      actionDispatch({ type: "setProgressText", payload: "Fetching subscriptions" });
+      const subscriptions = await fetchSubscriptions(config);
+      appDispatch({ type: "setSubscriptions", payload: subscriptions });
+
+      actionDispatch({ type: "setProgressText", payload: "Fetching notifications" });
+      const notifications = await fetchNotifications(config);
+      appDispatch({ type: "setNotifications", payload: notifications });
+
+      actionDispatch({ type: "setProgressText", payload: "Fetching data" });
+
+      const data = await fetchData(config.primaryEntity.logicalName, defaultView.fetchxml, config.primaryEntity.swimLaneSource, defaultForm, metadata, attributeMetadata);
+
+      if (config.secondaryEntity) {
+        const secondaryData = await fetchData(config.secondaryEntity.logicalName,
+          defaultSecondaryView.fetchxml,
+          config.secondaryEntity.swimLaneSource,
+          defaultSecondaryForm, secondaryMetadata,
+          secondaryAttributeMetadata,
+          {
+            additionalFields: [ config.secondaryEntity.parentLookup ],
+            additionalConditions: [{
+              attribute: config.secondaryEntity.parentLookup,
+              operator: "in",
+              values: data.length > 1 ? data.reduce((all, d) => [...all, ...d.data.map(laneData => laneData[metadata.PrimaryIdAttribute] as string)], [] as Array<string>) : ["00000000-0000-0000-0000-000000000000"]
+            }]
+          }
+        );
+        appDispatch({ type: "setSecondaryData", payload: secondaryData });
+      }
+
+      appDispatch({ type: "setBoardData", payload: data });
+      actionDispatch({ type: "setProgressText", payload: undefined });
+    }
+    catch (e) {
+      Xrm.Utility.alertDialog(e?.message ?? e, () => {});
+    }
+  };
+
+  useEffect(() => {
     initializeConfig();
-  }, []);
+  }, [ configState.configId ]);
 
   const verifyDeletion = () => setShowDeletionVerification(true);
   const hideDeletionVerification = () => setShowDeletionVerification(false);
@@ -282,6 +298,10 @@ export const Board = () => {
     return refresh(appDispatch, appState, configState, actionDispatch, actionState);
   };
 
+  const openConfigSelector = () => {
+    actionDispatch({ type: "setConfigSelectorDisplayState", payload: true });
+  };
+
   // Passing of a new object on each render (which we are doing) will cause all advanced data tiles to rerender, since objects are only compared shallowly
   // Not doing this will make the rerender logic very complex, so we don't do that for now
   const advancedTileStyle = { margin: "5px" };
@@ -307,7 +327,7 @@ export const Board = () => {
       config={configState.config.primaryEntity}
       separatorMetadata={configState.separatorMetadata}
       secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${configState.config.secondaryEntity.parentLookup}_value`] === d[configState.metadata.PrimaryIdAttribute])}))} />)), []);
-  }, [displayState, appState.boardData, appState.secondaryData, stateFilters, appliedSearchText, appState.notifications, appState.subscriptions, actionState.selectedSecondaryForm]);
+  }, [displayState, appState.boardData, appState.secondaryData, stateFilters, appliedSearchText, appState.notifications, appState.subscriptions, actionState.selectedSecondaryForm, configState.configId]);
 
     const simpleData = React.useMemo(() => {
       return appState.boardData && appState.boardData
@@ -324,7 +344,7 @@ export const Board = () => {
         config={configState.config.primaryEntity}
         separatorMetadata={configState.separatorMetadata}
         lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${configState.config.secondaryEntity.parentLookup}_value`] !== r[configState.metadata.PrimaryIdAttribute])))}} />);
-    }, [appState.boardData, appState.subscriptions, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications]);
+    }, [appState.boardData, appState.subscriptions, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications, configState.configId]);
 
   return (
     <div style={{height: "100%"}}>
@@ -334,7 +354,8 @@ export const Board = () => {
       <Navbar bg="light" variant="light" fixed="top">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
-            <DropdownButton variant="outline-primary" id="viewSelector" title={<>{actionState.selectedView?.name} <Badge variant="primary">{appState?.boardData?.reduce((count, l) => count + l.data.length, 0)}</Badge></> ?? "Select view"}>
+            <Button title="Config Selector" onClick={openConfigSelector} variant="outline-primary"><FontAwesomeIcon icon="th" /></Button>
+            <DropdownButton style={{marginLeft: "5px"}} variant="outline-primary" id="viewSelector" title={<>{actionState.selectedView?.name} <Badge variant="primary">{appState?.boardData?.reduce((count, l) => count + l.data.length, 0)}</Badge></> ?? "Select view"}>
               { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
             </DropdownButton>
             <DropdownButton variant="outline-primary" id="formSelector" title={actionState.selectedForm?.name ?? "Select form"} style={{marginLeft: "5px"}}>

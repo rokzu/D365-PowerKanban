@@ -47,6 +47,25 @@ const TileRender = (props: TileProps) => {
     const secondaryConfig = configState.config.secondaryEntity;
     const secondarySeparator = configState.secondarySeparatorMetadata;
 
+    const context = {
+        showForm: (form: FlyOutForm) => {
+            return new Promise((resolve, reject) => {
+                form.resolve = resolve;
+                form.reject = reject;
+
+                actionDispatch({ type: "setFlyOutForm", payload: form });
+            });
+        },
+        refresh: () => props.refresh,
+        data: props.data,
+        WebApiClient: WebApiClient
+    };
+
+    const accessFunc = (identifier: string) => {
+        const path = identifier.split(".");
+        return path.reduce((all, cur) => !all ? undefined : (all as any)[cur], window);
+    };
+
     const [{ isDragging }, drag] = useDrag({
         item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile },
         end: (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
@@ -60,30 +79,19 @@ const TileRender = (props: TileProps) => {
                 let preventDefault = false;
 
                 if (props.config.transitionCallback) {
-                    const context = {
-                        showForm: (form: FlyOutForm) => {
-                            return new Promise((resolve, reject) => {
-                                form.resolve = resolve;
-                                form.reject = reject;
-
-                                actionDispatch({ type: "setFlyOutForm", payload: form });
-                            });
-                        },
-                        data: props.data,
-                        target: dropResult.option,
-                        WebApiClient: WebApiClient
+                    const eventContext = {
+                        ...context,
+                        target: dropResult.option
                     };
 
-                    const path = props.config.transitionCallback.split(".");
-                    const funcRef = path.reduce((all, cur) => !all ? undefined : (all as any)[cur], window);
+                    const funcRef = accessFunc(props.config.transitionCallback);
 
-                    const result = await Promise.resolve(funcRef(context));
+                    const result = await Promise.resolve(funcRef(eventContext));
                     preventDefault = result?.preventDefault;
                 }
 
                 if (preventDefault) {
                     actionDispatch({ type: "setWorkIndicator", payload: false });
-                    await props.refresh();
                 }
                 else {
                     actionDispatch({ type: "setWorkIndicator", payload: true });
@@ -191,8 +199,11 @@ const TileRender = (props: TileProps) => {
         actionDispatch({ type: "setWorkIndicator", payload: false });
     };
 
-    const triggerCallBack = (identifier: string) => {
-
+    const initCallBack = (identifier: string) => {
+        return async () => {
+            const funcRef = accessFunc(identifier);
+            const result = await Promise.resolve(funcRef(context));
+        };
     };
 
     const isSubscribed = useMemo(() => props.subscriptions?.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]), [props.subscriptions]);
@@ -206,7 +217,7 @@ const TileRender = (props: TileProps) => {
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
                         { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
-                    <Dropdown as={ButtonGroup} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}>
+                    { props.config.notificationLookup && props.config.subscriptionLookup && <Dropdown as={ButtonGroup} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}>
                         <Button onClick={showNotifications} variant="outline-secondary">
                             {
                             <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { props.notifications?.length > 0 && <Badge variant="danger">{props.notifications.length}</Badge> }</span>
@@ -218,23 +229,22 @@ const TileRender = (props: TileProps) => {
                             <Dropdown.Item as="button" onClick={unsubscribe}><FontAwesomeIcon icon="bell-slash" /> Unsubscribe</Dropdown.Item>
                             <Dropdown.Item as="button" onClick={clearNotifications}><FontAwesomeIcon icon="eye-slash" /> Mark as read</Dropdown.Item>
                             <Dropdown.Item as="button" onClick={showNotifications}><FontAwesomeIcon icon="eye" /> Show notifications</Dropdown.Item>
-                            {
-                                props.config.customButtons && props.config.customButtons.length &&
-                                <>
-                                    <Dropdown.Divider></Dropdown.Divider>
-                                    { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={() => triggerCallBack(b.callBack)}>{b.label}</Dropdown.Item>) }
-                                </>
-                            }
                         </Dropdown.Menu>
-                    </Dropdown>
+                    </Dropdown>}
                     <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
                         <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
                         <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
                         { configState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
+                        {
+                            props.config.customButtons && props.config.customButtons.length &&
+                            <>
+                                <Dropdown.Divider></Dropdown.Divider>
+                                { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={initCallBack(b.callBack)}>{b.label}</Dropdown.Item>) }
+                            </>
+                        }
                     </DropdownButton>
                 </Card.Header>
                 <Card.Body>
-                    <Image  />
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
                         { props.cardForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="body" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>

@@ -16,7 +16,8 @@ type Action = { type: "setSelectedRecord", payload: Xrm.LookupValue }
     | { type: "setProgressText", payload: string }
     | { type: "setWorkIndicator", payload: boolean}
     | { type: "setSelectedRecordDisplayType", payload: DisplayType }
-    | { type: "setFlyOutForm", payload: FlyOutForm };
+    | { type: "setFlyOutForm", payload: FlyOutForm }
+    | { type: "setConfigSelectorDisplayState", payload: boolean };
 
 export type ActionDispatch = (action: Action) => void;
 
@@ -32,6 +33,7 @@ export type ActionStateProps = {
     workIndicator?: boolean;
     selectedRecordDisplayType?: DisplayType;
     flyOutForm?: FlyOutForm;
+    configSelectorDisplayState?: boolean;
 };
 
 type ActionContextProps = {
@@ -78,6 +80,9 @@ function stateReducer(state: ActionStateProps, action: Action): ActionStateProps
         }
         case "setFlyOutForm": {
             return { ...state, flyOutForm: action.payload };
+        }
+        case "setConfigSelectorDisplayState": {
+            return { ...state, configSelectorDisplayState: action.payload };
         }
     }
 }

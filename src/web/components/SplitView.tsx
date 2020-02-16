@@ -6,6 +6,7 @@ import { NotificationList } from "./NotificationList";
 import { UserInputModal } from "./UserInputModalProps";
 import { ExternalForm } from "./ExternalForm";
 import { useActionState, DisplayType } from "../domain/ActionState";
+import { ConfigSelector } from "./ConfigSelector";
 
 interface SplitViewProps { }
 
@@ -27,6 +28,7 @@ export const SplitView = (props: SplitViewProps) => {
             </Modal.Body>
         </Modal>
         { actionState.flyOutForm && <ExternalForm /> }
+        { actionState.configSelectorDisplayState && <ConfigSelector /> }
         <div style={{display: "flex", width: "100%", height: "100%", backgroundColor: "#efefef", paddingTop: "50px"}}>
             <div style={actionState.selectedRecord ? { minWidth: "600px", resize: "horizontal", overflow: "auto"} : { width: "100%" }}>
                 <Board />

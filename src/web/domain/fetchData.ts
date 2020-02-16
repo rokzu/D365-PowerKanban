@@ -11,8 +11,20 @@ import { ConfigStateProps } from "./ConfigState";
 
 const getFieldsFromSegment = (segment: CardSegment): Array<string> => segment.rows.reduce((all, curr) => [...all, ...curr.cells.map(c => c.field)], []);
 
+const removeChildren = (parent: Element, childTag: string) => {
+  const children = parent.getElementsByTagName(childTag);
+
+  for (let index = children.length - 1; index >= 0; index--) {
+    children[index].parentNode.removeChild(children[index]);
+  }
+};
+
 export const fetchData = async (entityName: string, fetchXml: string, swimLaneSource: string, form: CardForm, metadata: Metadata, attribute: Attribute, options?: { additionalFields?: Array<string>, hideEmptyLanes?: boolean; additionalConditions?: Array<{ attribute: string; operator: string; values?: Array<string>; }> }): Promise<Array<BoardLane>> => {
   try {
+    if (!form) {
+      return [];
+    }
+
     const formFields = Array.from(new Set([...getFieldsFromSegment(form.parsed.header), ...getFieldsFromSegment(form.parsed.body), ...getFieldsFromSegment(form.parsed.footer)]));
 
     // We make sure that the swim lane source is always included without having to update all views
@@ -37,10 +49,10 @@ export const fetchData = async (entityName: string, fetchXml: string, swimLaneSo
     root.setAttribute("no-lock", "true");
 
     // Remove all currently set attributes
-    Array.from(entity.getElementsByTagName("attribute")).forEach(a => entity.removeChild(a));
+    removeChildren(entity, "attribute");
+
     Array.from(entity.getElementsByTagName("link-entity")).forEach(l => {
-      const attributes = Array.from(l.getElementsByTagName("attribute"));
-      attributes.forEach(a => l.removeChild(a));
+      removeChildren(l, "attribute");
     });
 
     // Add all attributes required for rendering

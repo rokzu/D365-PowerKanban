@@ -2,12 +2,9 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { App } from "./App";
 import { library } from "@fortawesome/fontawesome-svg-core";
-import whyDidYouRender from "@welldone-software/why-did-you-render";
-import { faSync, faWindowClose, faWindowMaximize, faAngleDoubleRight, faBell, faBellSlash, faPlusSquare, faEyeSlash, faEye, faCircle, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSync, faWindowClose, faWindowMaximize, faAngleDoubleRight, faBell, faBellSlash, faPlusSquare, faEyeSlash, faEye, faCircle, faSearch, faTh } from "@fortawesome/free-solid-svg-icons";
 
-whyDidYouRender(React);
-
-library.add(faSync, faWindowClose, faWindowMaximize, faAngleDoubleRight, faBell, faBellSlash, faPlusSquare, faEyeSlash, faEye, faCircle, faSearch);
+library.add(faSync, faWindowClose, faWindowMaximize, faAngleDoubleRight, faBell, faBellSlash, faPlusSquare, faEyeSlash, faEye, faCircle, faSearch, faTh);
 
 ReactDOM.render(
     <App />,
