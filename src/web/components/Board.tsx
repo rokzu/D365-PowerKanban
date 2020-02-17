@@ -87,6 +87,9 @@ export const Board = () => {
 
   const initializeConfig = async () => {
     try {
+      appDispatch({ type: "setSecondaryData", payload: [] });
+      appDispatch({ type: "setBoardData", payload: [] });
+
       const configId = await getConfigId();
 
       if (!configId) {

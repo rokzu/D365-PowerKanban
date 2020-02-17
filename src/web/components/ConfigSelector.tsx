@@ -7,6 +7,7 @@ import { UserInputModal } from "./UserInputModalProps";
 import { useActionContext } from "../domain/ActionState";
 import { useConfigDispatch } from "../domain/ConfigState";
 import WebApiClient from "xrm-webapi-client";
+import { formatGuid } from "../domain/GuidFormatter";
 
 interface ConfigSelectorProps {
 }
@@ -16,9 +17,17 @@ export const ConfigSelector = (props: ConfigSelectorProps) => {
     const configDispatch = useConfigDispatch();
     const [ configId, setConfigId ] = useState(undefined);
     const [ configs, setConfigs ] = useState([]);
+    const [ makeDefault, setMakeDefault ] = useState(false);
 
-    const yesCallBack = () => {
-        configDispatch({ type: "setConfigId", payload: configId });
+    const yesCallBack = async() => {
+        const id = configId;
+
+        if (makeDefault) {
+            const userId = formatGuid(Xrm.Page.context.getUserId());
+            await WebApiClient.Update({ entityName: "systemuser", entityId: userId, entity: { oss_defaultboardid: id } });
+        }
+
+        configDispatch({ type: "setConfigId", payload: id });
     };
 
     const hideDialog = () => {
@@ -36,6 +45,11 @@ export const ConfigSelector = (props: ConfigSelectorProps) => {
 
     const onSelection = (e: any) => {
         setConfigId(e.target.value);
+        setMakeDefault(false);
+    };
+
+    const onMakeDefault = (e: any) => {
+        setMakeDefault(e.target.value);
     };
 
     return (
@@ -43,9 +57,12 @@ export const ConfigSelector = (props: ConfigSelectorProps) => {
             <Form.Group controlId="configSelector">
                 <Form.Label>Select a board to load</Form.Label>
                 <Form.Control as="select" onChange={onSelection}>
-                <option value=""></option>
-                { configs.map(c => <option value={c.webresourceid}>{c.displayname}</option>) }
+                    <option value=""></option>
+                    { configs.map(c => <option value={c.webresourceid}>{c.displayname}</option>) }
                 </Form.Control>
+            </Form.Group>
+            <Form.Group controlId="setDefaultCheckbox">
+                <Form.Check checked={makeDefault} onChange={onMakeDefault} type="checkbox" label="Make this my default board" />
             </Form.Group>
         </UserInputModal>
     );
