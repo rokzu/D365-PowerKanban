@@ -239,7 +239,12 @@ const TileRender = (props: TileProps) => {
                             props.config.customButtons && props.config.customButtons.length &&
                             <>
                                 <Dropdown.Divider></Dropdown.Divider>
-                                { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={initCallBack(b.callBack)}>{b.label}</Dropdown.Item>) }
+                                { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={initCallBack(b.callBack)}>
+                                    <>
+                                        {b.icon && <img src={b.icon}></img>}
+                                        {b.label}
+                                    </>
+                                }</Dropdown.Item>) }
                             </>
                         }
                     </DropdownButton>

@@ -54,3 +54,11 @@ window.boardViewExtender.onStateTransition = function(context) {
         return { preventDefault: true };
     });
 };
+
+window.boardViewExtender.onPrimaryClick = function (context) {
+    alert("Primary button clicked");
+};
+
+window.boardViewExtender.onSecondaryClick = function (context) {
+    alert("Secondary button clicked");
+};

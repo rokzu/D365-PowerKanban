@@ -1,0 +1,32 @@
+{
+    "primaryEntity": {
+        "allowTransitions": true,
+        "logicalName": "queue",
+        "swimLaneSource": "statuscode",
+        "customButtons": [
+            {
+                "id": "Assign",
+                "label": "Assign",
+                "callBack": "boardViewExtender.onPrimaryClick"
+            }
+        ]
+    },
+    "defaultViewId": "",
+    "showCreateButton": true,
+    "showDeleteButton": true,
+    "showDeactivateButton": true,
+    "secondaryEntity": {
+        "allowTransitions": true,
+        "logicalName": "queueitem",
+        "parentLookup": "queueid",
+        "swimLaneSource": "statuscode",
+        "customButtons": [
+            {
+                "id": "pick",
+                "label": "Pick",
+                "callBack": "boardViewExtender.onSecondaryClick"
+            }
+        ]
+    },
+    "customScriptUrl": "/WebResources/oss_/D365BoardView/js/exampleExternalScript.js"
+}
