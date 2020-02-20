@@ -260,6 +260,7 @@ const TileRender = (props: TileProps) => {
                     </div>
                     { props.secondaryData &&
                     <div>
+                        <div className="border-top my-3"></div>
                         <span style={{marginLeft: "5px", fontSize: "larger"}}>
                             {secondaryMetadata.DisplayCollectionName.UserLocalizedLabel.Label}
                         </span>
