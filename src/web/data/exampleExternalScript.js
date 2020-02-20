@@ -32,6 +32,8 @@ window.boardViewExtender.onStateTransition = function(context) {
     })
     .then(formResult => {
         if (!formResult.cancelled) {
+            context.setWorkIndicator(true);
+
             const closeRequest = context.WebApiClient.Requests.CloseIncidentRequest.with({
                 payload: {
                     IncidentResolution: {
@@ -45,6 +47,10 @@ window.boardViewExtender.onStateTransition = function(context) {
             });
 
             return context.WebApiClient.Execute(closeRequest)
+            .then(() => {
+                context.setWorkIndicator(false);
+                return context.refresh()
+            })
             .then(() => {
                 return { preventDefault: true };
             })

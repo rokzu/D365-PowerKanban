@@ -56,7 +56,10 @@ const TileRender = (props: TileProps) => {
                 actionDispatch({ type: "setFlyOutForm", payload: form });
             });
         },
-        refresh: () => props.refresh,
+        refresh: props.refresh,
+        setWorkIndicator: (working: boolean) => {
+            return actionDispatch({ type: "setWorkIndicator", payload: working });
+        },
         data: props.data,
         WebApiClient: WebApiClient
     };
@@ -213,43 +216,45 @@ const TileRender = (props: TileProps) => {
     return (
         <div ref={drag}>
             <Card style={{opacity, marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: props.borderColor, borderLeftWidth: "3px", ...props.style}}>
-                <Card.Header>
-                    <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
-                        { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
-                    </div>
-                    { props.config.notificationLookup && props.config.subscriptionLookup && <Dropdown as={ButtonGroup} style={{float: "right", position: "absolute", top: "5px", right: "40px"}}>
-                        <Button onClick={showNotifications} variant="outline-secondary">
+                <Card.Header style={{ padding: "10px" }}>
+                    <div style={{display: "flex", flexDirection: "row"}}>
+                        <div style={{display: "flex", flex: "1", overflow: "auto", flexDirection: "column", color: "#666666" }}>
+                            { props.cardForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="header" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
+                        </div>
+                        { props.config.notificationLookup && props.config.subscriptionLookup && <Dropdown as={ButtonGroup} style={{ display: "initial", margintop: "5px", marginRight: "5px" }}>
+                            <Button onClick={showNotifications} variant="outline-secondary">
+                                {
+                                <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { props.notifications?.length > 0 && <Badge variant="danger">{props.notifications.length}</Badge> }</span>
+                                }
+                            </Button>
+                            <Dropdown.Toggle split variant="outline-secondary" id="dropdown-split-basic" />
+                            <Dropdown.Menu>
+                                <Dropdown.Item as="button" onClick={subscribe}><FontAwesomeIcon icon="bell" /> Subscribe</Dropdown.Item>
+                                <Dropdown.Item as="button" onClick={unsubscribe}><FontAwesomeIcon icon="bell-slash" /> Unsubscribe</Dropdown.Item>
+                                <Dropdown.Item as="button" onClick={clearNotifications}><FontAwesomeIcon icon="eye-slash" /> Mark as read</Dropdown.Item>
+                                <Dropdown.Item as="button" onClick={showNotifications}><FontAwesomeIcon icon="eye" /> Show notifications</Dropdown.Item>
+                            </Dropdown.Menu>
+                        </Dropdown>}
+                        <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ margintop: "5px" }}>
+                            <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
+                            <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
+                            { configState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
                             {
-                            <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { props.notifications?.length > 0 && <Badge variant="danger">{props.notifications.length}</Badge> }</span>
+                                props.config.customButtons && props.config.customButtons.length &&
+                                <>
+                                    <Dropdown.Divider></Dropdown.Divider>
+                                    { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={initCallBack(b.callBack)}>
+                                        <>
+                                            {b.icon && <img src={b.icon}></img>}
+                                            {b.label}
+                                        </>
+                                    }</Dropdown.Item>) }
+                                </>
                             }
-                        </Button>
-                        <Dropdown.Toggle split variant="outline-secondary" id="dropdown-split-basic" />
-                        <Dropdown.Menu>
-                            <Dropdown.Item as="button" onClick={subscribe}><FontAwesomeIcon icon="bell" /> Subscribe</Dropdown.Item>
-                            <Dropdown.Item as="button" onClick={unsubscribe}><FontAwesomeIcon icon="bell-slash" /> Unsubscribe</Dropdown.Item>
-                            <Dropdown.Item as="button" onClick={clearNotifications}><FontAwesomeIcon icon="eye-slash" /> Mark as read</Dropdown.Item>
-                            <Dropdown.Item as="button" onClick={showNotifications}><FontAwesomeIcon icon="eye" /> Show notifications</Dropdown.Item>
-                        </Dropdown.Menu>
-                    </Dropdown>}
-                    <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ float: "right", position: "absolute", "top": "5px", right: "5px"}}>
-                        <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
-                        <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
-                        { configState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
-                        {
-                            props.config.customButtons && props.config.customButtons.length &&
-                            <>
-                                <Dropdown.Divider></Dropdown.Divider>
-                                { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={initCallBack(b.callBack)}>
-                                    <>
-                                        {b.icon && <img src={b.icon}></img>}
-                                        {b.label}
-                                    </>
-                                }</Dropdown.Item>) }
-                            </>
-                        }
-                    </DropdownButton>
+                        </DropdownButton>
+                    </div>
                 </Card.Header>
-                <Card.Body>
+                <Card.Body style={{ padding: "10px" }}>
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
                         { props.cardForm.parsed.body.rows.map((r, i) => <div key={`bodyRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="body" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>
@@ -278,7 +283,7 @@ const TileRender = (props: TileProps) => {
                     </div>
                     }
                 </Card.Body>
-                <Card.Footer style={{ backgroundColor: "#efefef" }}>
+                <Card.Footer style={{ backgroundColor: "#efefef", padding: "10px" }}>
                     <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
                         { props.cardForm.parsed.footer.rows.map((r, i) => <div key={`footerRow_${props.data[props.metadata.PrimaryIdAttribute]}_${i}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}><FieldRow searchString={props.searchText} type="footer" metadata={props.metadata} data={props.data} cells={r.cells} /></div>) }
                     </div>

@@ -54,7 +54,7 @@ const FieldRowRender = (props: FieldRowProps) => {
     if (props.type === "header") {
         return (
             <div style={{ display: "flex", flexDirection: "row" }}>
-                { rows.map(([c, data], i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field)?.DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: "5px", marginRight: "5px"}}>{ data }</div>) }
+                { rows.map(([c, data], i) => <div title={props.metadata.Attributes.find(a => a.LogicalName === c.field)?.DisplayName.UserLocalizedLabel.Label} key={`cell_${props.data[props.metadata.PrimaryIdAttribute]}_${c.field}`} style={{marginLeft: i === 0 ? "0px" : "5px", marginRight: i === rows.length - 1 ? "0px" : "5px"}}>{ data }</div>) }
             </div>
         );
     }

@@ -25,7 +25,7 @@ export const NotificationList = (props: NotificationListProps) => {
 
   useEffect(() => {
     const fetchEventRecord = async() => {
-      const { value: data }: { value: any } = await WebApiClient.Retrieve({ entityName: actionState.selectedRecord.entityType, entityId: actionState.selectedRecord.id, queryParams: `?$select=${columns.join(",")}`, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
+      const data = await WebApiClient.Retrieve({ entityName: actionState.selectedRecord.entityType, entityId: actionState.selectedRecord.id, queryParams: `?$select=${columns.join(",")}`, headers: [ { key: "Prefer", value: "odata.include-annotations=\"*\"" } ] });
       setEventRecord(data);
     };
     fetchEventRecord();
