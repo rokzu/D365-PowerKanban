@@ -58,7 +58,7 @@ export const ConfigSelector = (props: ConfigSelectorProps) => {
                 <Form.Label>Select a board to load</Form.Label>
                 <Form.Control as="select" onChange={onSelection}>
                     <option value=""></option>
-                    { configs.map(c => <option value={c.webresourceid}>{c.displayname}</option>) }
+                    { configs.map(c => <option key={c.webresourceid} value={c.webresourceid}>{c.displayname}</option>) }
                 </Form.Control>
             </Form.Group>
             <Form.Group controlId="setDefaultCheckbox">

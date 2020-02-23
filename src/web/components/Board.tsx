@@ -194,11 +194,11 @@ export const Board = () => {
           secondaryAttributeMetadata,
           {
             additionalFields: [ config.secondaryEntity.parentLookup ],
-            additionalConditions: [{
+            additionalCondition: {
               attribute: config.secondaryEntity.parentLookup,
               operator: "in",
               values: data.length > 1 ? data.reduce((all, d) => [...all, ...d.data.map(laneData => laneData[metadata.PrimaryIdAttribute] as string)], [] as Array<string>) : ["00000000-0000-0000-0000-000000000000"]
-            }]
+            }
           }
         );
         appDispatch({ type: "setSecondaryData", payload: secondaryData });
@@ -356,7 +356,7 @@ export const Board = () => {
       <Navbar bg="light" variant="light" fixed="top">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
-            <Button title="Config Selector" onClick={openConfigSelector} variant="outline-primary"><i className="fa fa-th" aria-hidden="true"></i></Button>
+            <Button title="Config Selector" onClick={openConfigSelector} variant="outline-primary"><span><i className="fa fa-th" aria-hidden="true"></i></span></Button>
             <DropdownButton style={{marginLeft: "5px"}} variant="outline-primary" id="viewSelector" title={<>{actionState.selectedView?.name} <Badge variant="primary">{appState?.boardData?.reduce((count, l) => count + l.data.length, 0)}</Badge></> ?? "Select view"}>
               { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
             </DropdownButton>
@@ -390,7 +390,7 @@ export const Board = () => {
                 placeholder="Filter records"
               />
               <InputGroup.Append>
-                <Button variant="outline-secondary" onClick={search}><i className="fa fa-search" aria-hidden="true"></i></Button>
+                <Button variant="outline-secondary" onClick={search}><span><i className="fa fa-search" aria-hidden="true"></i></span></Button>
               </InputGroup.Append>
             </InputGroup>
           </Nav>
@@ -406,14 +406,14 @@ export const Board = () => {
               }
               { !actionState.workIndicator &&
                 <>
-                  <i className="fa fa-circle" aria-hidden="true"></i>
+                  <span><i className="fas fa-circle" aria-hidden="true"></i></span>
                   <span className="sr-only">Idle</span>
                 </>
               }
             </Button>
             { configState.config && configState.config.showCreateButton && <Button style={{marginLeft: "5px"}}  variant="outline-primary" onClick={newRecord}>Create New</Button> }
             <Button variant="outline-primary" style={{marginLeft: "5px"}} onClick={refreshBoard}>
-              <i className="fa fa-sync" aria-hidden="true"></i>
+              <span><i className="fa fa-sync" aria-hidden="true"></i></span>
             </Button>
           </Nav>
         </Navbar.Collapse>

@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
-import { useAppContext } from "../domain/AppState";
 import { Col, Card } from "react-bootstrap";
 import { Tile } from "./Tile";
 import { BoardLane } from "../domain/BoardLane";
@@ -79,8 +78,7 @@ const LaneRender = (props: LaneProps) => {
             <Card style={{borderColor: "#d8d8d8", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
                 <Card.Body>
                     <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
-                    { props.cardForm && props.isSecondaryLane && props.lane.data.map(mapDataToTile) }
-                    { props.cardForm && !props.isSecondaryLane && props.lane.data.map(mapDataToTile) }
+                    { props.cardForm && props.lane.data.map(mapDataToTile) }
                 </Card.Body>
             </Card>
         </div>
