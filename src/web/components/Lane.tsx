@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import { useAppContext } from "../domain/AppState";
 import { Col, Card } from "react-bootstrap";
 import { Tile } from "./Tile";
@@ -25,6 +25,7 @@ interface LaneProps {
     selectedSecondaryForm?: CardForm;
     separatorMetadata: Attribute;
     subscriptions: {[key: string]: Array<Subscription>};
+    isSecondaryLane?: boolean;
 }
 
 const LaneRender = (props: LaneProps) => {
@@ -57,26 +58,29 @@ const LaneRender = (props: LaneProps) => {
       style = { borderWidth: "3px", borderStyle: "dashed", borderColor: "#3b79b7" };
     }
 
+    const mapDataToTile = ((d: any) => <Tile
+      notifications={props.notifications[d[props.metadata.PrimaryIdAttribute]] ?? []}
+      dndType={props.dndType}
+      laneOption={props.lane.option}
+      borderColor={borderColor}
+      metadata={props.metadata}
+      cardForm={props.cardForm}
+      key={`tile_${d[props.metadata.PrimaryIdAttribute]}`}
+      refresh={props.refresh}
+      subscriptions={props.subscriptions[d[props.metadata.PrimaryIdAttribute]]}
+      searchText={props.searchText}
+      data={d}
+      config={props.config}
+      separatorMetadata={props.separatorMetadata} />
+    );
+
     return (
         <div ref={drop} style={{ ...style, minWidth: props.minWidth ?? "400px", margin: "5px", flex: "1 1 0" }}>
             <Card style={{borderColor: "#d8d8d8", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
                 <Card.Body>
                     <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
-                    { props.cardForm && props.lane.data.map(d => <Tile
-                      notifications={props.notifications[d[props.metadata.PrimaryIdAttribute]] ?? []}
-                      dndType={props.dndType}
-                      laneOption={props.lane.option}
-                      borderColor={borderColor}
-                      metadata={props.metadata}
-                      cardForm={props.cardForm}
-                      key={`tile_${d[props.metadata.PrimaryIdAttribute]}`}
-                      refresh={props.refresh}
-                      subscriptions={props.subscriptions[d[props.metadata.PrimaryIdAttribute]]}
-                      searchText={props.searchText}
-                      data={d}
-                      config={props.config}
-                      separatorMetadata={props.separatorMetadata} />)
-                    }
+                    { props.cardForm && props.isSecondaryLane && props.lane.data.map(mapDataToTile) }
+                    { props.cardForm && !props.isSecondaryLane && props.lane.data.map(mapDataToTile) }
                 </Card.Body>
             </Card>
         </div>

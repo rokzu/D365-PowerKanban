@@ -6,7 +6,6 @@ import { Metadata, Option, Attribute } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
 import { BoardLane } from "../domain/BoardLane";
 import { Lane } from "./Lane";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ItemTypes } from "../domain/ItemTypes";
 import { refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
 import WebApiClient from "xrm-webapi-client";
@@ -224,31 +223,32 @@ const TileRender = (props: TileProps) => {
                         { props.config.notificationLookup && props.config.subscriptionLookup && <Dropdown as={ButtonGroup} style={{ display: "initial", margintop: "5px", marginRight: "5px" }}>
                             <Button onClick={showNotifications} variant="outline-secondary">
                                 {
-                                <span>{isSubscribed ? <FontAwesomeIcon icon="bell" /> : <FontAwesomeIcon icon="bell-slash" />} { props.notifications?.length > 0 && <Badge variant="danger">{props.notifications.length}</Badge> }</span>
+                                <span>{isSubscribed ? <i className="fa fa-bell" aria-hidden="true"></i> : <i className="fa fa-bell-slash" aria-hidden="true"></i>} { props.notifications?.length > 0 && <Badge variant="danger">{props.notifications.length}</Badge> }</span>
                                 }
                             </Button>
                             <Dropdown.Toggle split variant="outline-secondary" id="dropdown-split-basic" />
                             <Dropdown.Menu>
-                                <Dropdown.Item as="button" onClick={subscribe}><FontAwesomeIcon icon="bell" /> Subscribe</Dropdown.Item>
-                                <Dropdown.Item as="button" onClick={unsubscribe}><FontAwesomeIcon icon="bell-slash" /> Unsubscribe</Dropdown.Item>
-                                <Dropdown.Item as="button" onClick={clearNotifications}><FontAwesomeIcon icon="eye-slash" /> Mark as read</Dropdown.Item>
-                                <Dropdown.Item as="button" onClick={showNotifications}><FontAwesomeIcon icon="eye" /> Show notifications</Dropdown.Item>
+                                <Dropdown.Item as="button" onClick={subscribe}><i className="fa fa-bell" aria-hidden="true"></i> Subscribe</Dropdown.Item>
+                                <Dropdown.Item as="button" onClick={unsubscribe}><i className="fa fa-bell-slash" aria-hidden="true"></i> Unsubscribe</Dropdown.Item>
+                                <Dropdown.Item as="button" onClick={clearNotifications}><i className="fa fa-eye-slash" aria-hidden="true"></i> Mark as read</Dropdown.Item>
+                                <Dropdown.Item as="button" onClick={showNotifications}><i className="fa fa-eye" aria-hidden="true"></i> Show notifications</Dropdown.Item>
                             </Dropdown.Menu>
                         </Dropdown>}
                         <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ margintop: "5px" }}>
-                            <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><FontAwesomeIcon icon="angle-double-right" /> Open in split screen</Dropdown.Item>
-                            <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><FontAwesomeIcon icon="window-maximize" /> Open in new window</Dropdown.Item>
-                            { configState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><FontAwesomeIcon icon="plus-square" /> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
+                            <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><i className="fa fa-angle-double-right" aria-hidden="true"></i> Open in split screen</Dropdown.Item>
+                            <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><i className="fa fa-window-maximize" aria-hidden="true"></i> Open in new window</Dropdown.Item>
+                            { configState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><i className="fa fa-square" aria-hidden="true"></i> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
                             {
                                 props.config.customButtons && props.config.customButtons.length &&
                                 <>
                                     <Dropdown.Divider></Dropdown.Divider>
                                     { props.config.customButtons.map(b => <Dropdown.Item key={b.id} id={b.id} as="button" onClick={initCallBack(b.callBack)}>
                                         <>
-                                            {b.icon && <img src={b.icon}></img>}
-                                            {b.label}
+                                            {b.icon && b.icon.type === "url" && <img src={b.icon.value}></img>}
+                                            {b.icon && b.icon.type === "fa" && <i className={b.icon.value}></i>}
+                                            {" "}{b.label}
                                         </>
-                                    }</Dropdown.Item>) }
+                                    </Dropdown.Item>) }
                                 </>
                             }
                         </DropdownButton>
@@ -264,7 +264,7 @@ const TileRender = (props: TileProps) => {
                         <span style={{marginLeft: "5px", fontSize: "larger"}}>
                             {secondaryMetadata.DisplayCollectionName.UserLocalizedLabel.Label}
                         </span>
-                        <Button style={{marginLeft: "5px"}} variant="outline-secondary" onClick={createNewSecondary}><FontAwesomeIcon icon="plus-square" /></Button>
+                        <Button style={{marginLeft: "5px"}} variant="outline-secondary" onClick={createNewSecondary}><i className="fa fa-plus-square" aria-hidden="true"></i></Button>
                         <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "auto" }}>
                             {
                                 props.secondaryData.map(d => <Lane
@@ -278,7 +278,8 @@ const TileRender = (props: TileProps) => {
                                 metadata={secondaryMetadata}
                                 lane={d}
                                 config={secondaryConfig}
-                                separatorMetadata={secondarySeparator} />)
+                                separatorMetadata={secondarySeparator}
+                                isSecondaryLane />)
                             }
                         </div>
                     </div>

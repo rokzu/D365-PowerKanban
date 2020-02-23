@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useAppContext } from "../domain/AppState";
 import { Button, Form } from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import { fetchData, refresh } from "../domain/fetchData";
 import { UserInputModal } from "./UserInputModalProps";
 import { useActionContext } from "../domain/ActionState";

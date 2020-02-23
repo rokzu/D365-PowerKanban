@@ -9,7 +9,6 @@ import { Lane } from "./Lane";
 import { Metadata, Attribute, Option } from "../domain/Metadata";
 import { SavedQuery } from "../domain/SavedQuery";
 import { CardForm, parseCardForm } from "../domain/CardForm";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { fetchData, refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
 import { Tile } from "./Tile";
 import { DndContainer } from "./DndContainer";
@@ -357,7 +356,7 @@ export const Board = () => {
       <Navbar bg="light" variant="light" fixed="top">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
-            <Button title="Config Selector" onClick={openConfigSelector} variant="outline-primary"><FontAwesomeIcon icon="th" /></Button>
+            <Button title="Config Selector" onClick={openConfigSelector} variant="outline-primary"><i className="fa fa-th" aria-hidden="true"></i></Button>
             <DropdownButton style={{marginLeft: "5px"}} variant="outline-primary" id="viewSelector" title={<>{actionState.selectedView?.name} <Badge variant="primary">{appState?.boardData?.reduce((count, l) => count + l.data.length, 0)}</Badge></> ?? "Select view"}>
               { views?.map(v => <Dropdown.Item onClick={setView} as="button" id={v.savedqueryid} key={v.savedqueryid}>{v.name}</Dropdown.Item>) }
             </DropdownButton>
@@ -391,7 +390,7 @@ export const Board = () => {
                 placeholder="Filter records"
               />
               <InputGroup.Append>
-                <Button variant="outline-secondary" onClick={search}><FontAwesomeIcon icon="search" /></Button>
+                <Button variant="outline-secondary" onClick={search}><i className="fa fa-search" aria-hidden="true"></i></Button>
               </InputGroup.Append>
             </InputGroup>
           </Nav>
@@ -407,14 +406,14 @@ export const Board = () => {
               }
               { !actionState.workIndicator &&
                 <>
-                  <FontAwesomeIcon icon="circle" />
+                  <i className="fa fa-circle" aria-hidden="true"></i>
                   <span className="sr-only">Idle</span>
                 </>
               }
             </Button>
             { configState.config && configState.config.showCreateButton && <Button style={{marginLeft: "5px"}}  variant="outline-primary" onClick={newRecord}>Create New</Button> }
             <Button variant="outline-primary" style={{marginLeft: "5px"}} onClick={refreshBoard}>
-              <FontAwesomeIcon icon="sync" />
+              <i className="fa fa-sync" aria-hidden="true"></i>
             </Button>
           </Nav>
         </Navbar.Collapse>

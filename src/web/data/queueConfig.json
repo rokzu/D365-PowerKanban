@@ -7,7 +7,11 @@
             {
                 "id": "Assign",
                 "label": "Assign",
-                "callBack": "boardViewExtender.onPrimaryClick"
+                "callBack": "boardViewExtender.onPrimaryClick",
+                "icon": {
+                    "type": "fa",
+                    "value": "fas fa-anchor"
+                }
             }
         ]
     },

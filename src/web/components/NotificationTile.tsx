@@ -4,7 +4,7 @@ import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, I
 import { FieldRow } from "./FieldRow";
 import { Metadata, Option } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import { refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
 import WebApiClient from "xrm-webapi-client";
 import { Notification } from "../domain/Notification";
@@ -49,8 +49,8 @@ const NotificationTileRender = (props: NotificationTileProps) => {
                 <div style={{display: "flex", overflow: "auto", flexDirection: "column", color: "#666666", marginRight: "65px" }}>
                     { configState.notificationForm.parsed.header.rows.map((r, i) => <div key={`headerRow_${props.data[metadata.PrimaryIdAttribute]}_${i}`} style={{ margin: "5px", flex: "1 1 0" }}><FieldRow type="header" metadata={metadata} data={props.data} cells={r.cells} /></div>) }
                 </div>
-                <Button title="Mark as read" onClick={clearNotification} style={{float: "right", position: "absolute", top: "5px", right: "5px"}}><FontAwesomeIcon icon="eye-slash" /></Button>
-                { props.data.oss_event !== 863910000 && <Button title="Open in new window" onClick={openInNewTab} style={{float: "right", position: "absolute", top: "5px", right: "40px"}} ><FontAwesomeIcon icon="window-maximize" /></Button> }
+                <Button title="Mark as read" onClick={clearNotification} style={{float: "right", position: "absolute", top: "5px", right: "5px"}}><i className="fa fa-eye-slash" aria-hidden="true"></i></Button>
+                { props.data.oss_event !== 863910000 && <Button title="Open in new window" onClick={openInNewTab} style={{float: "right", position: "absolute", top: "5px", right: "40px"}} ><i className="fa fa-window-maximize" aria-hidden="true"></i></Button> }
             </Card.Header>
             <Card.Body>
                 { props.data.oss_event === 863910000 &&

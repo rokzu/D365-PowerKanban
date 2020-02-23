@@ -2,7 +2,7 @@ import { FlyOutForm } from "./FlyOutForm";
 
 export interface CustomButton {
     id: string;
-    icon: string;
+    icon: { type: string; value: string; };
     label: string;
     callBack: string;
 }

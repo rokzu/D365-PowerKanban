@@ -14,7 +14,6 @@
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.26",
     "@fortawesome/free-solid-svg-icons": "^5.12.0",
-    "@fortawesome/react-fontawesome": "^0.1.8",
     "cpx": "^1.5.0",
     "css-loader": "latest",
     "style-loader": "^0.23.1"
@@ -25,6 +24,7 @@
     "@types/react-dnd": "^3.0.2",
     "@types/react-dnd-html5-backend": "^3.0.2",
     "@types/react-dom": "^16.0.0",
+    "@types/react-window": "^1.8.1",
     "@types/xrm": "^9.0.15",
     "awesome-typescript-loader": "^5.2.1",
     "bootstrap": "^4.3.1",
@@ -35,6 +35,7 @@
     "react-dnd": "^10.0.2",
     "react-dnd-html5-backend": "^10.0.2",
     "react-dom": "^16.12.0",
+    "react-window": "^1.8.5",
     "source-map-loader": "^0.2.4",
     "styled-components": "^4.2.0",
     "tslint": "^5.16.0",
