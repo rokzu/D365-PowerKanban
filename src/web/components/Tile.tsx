@@ -265,7 +265,7 @@ const TileRender = (props: TileProps) => {
                             {secondaryMetadata.DisplayCollectionName.UserLocalizedLabel.Label}
                         </span>
                         <Button style={{marginLeft: "5px"}} variant="outline-secondary" onClick={createNewSecondary}><span><i className="fa fa-plus-square" aria-hidden="true"></i></span></Button>
-                        <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "auto" }}>
+                        <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "auto", height: "400px" }}>
                             {
                                 props.secondaryData.map(d => <Lane
                                 refresh={props.refresh}

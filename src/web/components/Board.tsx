@@ -15,6 +15,8 @@ import { DndContainer } from "./DndContainer";
 import { loadExternalScript } from "../domain/LoadExternalScript";
 import { useConfigContext } from "../domain/ConfigState";
 import { useActionContext } from "../domain/ActionState";
+import { List, CellMeasurerCache, CellMeasurer } from "react-virtualized";
+import AutoSizer from "react-virtualized-auto-sizer";
 
 const determineAttributeUrl = (attribute: Attribute) => {
   if (attribute.AttributeType === "Picklist") {
@@ -62,6 +64,12 @@ export const Board = () => {
   const [ appState, appDispatch ] = useAppContext();
   const [ actionState, actionDispatch ] = useActionContext();
   const [ configState, configDispatch ] = useConfigContext();
+  
+  const [cache, setCache] = useState(new CellMeasurerCache({
+    defaultHeight: 400,
+    minHeight: 50,
+    fixedWidth: true,
+  }));
 
   const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
   const [ secondaryViews, setSecondaryViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
@@ -331,22 +339,43 @@ export const Board = () => {
       secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${configState.config.secondaryEntity.parentLookup}_value`] === d[configState.metadata.PrimaryIdAttribute])}))} />)), []);
   }, [displayState, appState.boardData, appState.secondaryData, stateFilters, appliedSearchText, appState.notifications, appState.subscriptions, actionState.selectedSecondaryForm, configState.configId]);
 
-    const simpleData = React.useMemo(() => {
-      return appState.boardData && appState.boardData
-      .filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State))
-      .map(d => !appliedSearchText ? d : { ...d, data: d.data.filter(data => Object.keys(data).some(k => `${data[k]}`.toLowerCase().includes(appliedSearchText.toLowerCase()))) })
-      .map(d => <Lane
-        notifications={appState.notifications}
-        key={`lane_${d.option?.Value ?? "fallback"}`}
-        cardForm={actionState.selectedForm}
-        metadata={configState.metadata}
-        refresh={refreshBoard}
-        subscriptions={appState.subscriptions}
-        searchText={appliedSearchText}
-        config={configState.config.primaryEntity}
-        separatorMetadata={configState.separatorMetadata}
-        lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${configState.config.secondaryEntity.parentLookup}_value`] !== r[configState.metadata.PrimaryIdAttribute])))}} />);
-    }, [appState.boardData, appState.subscriptions, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications, configState.configId]);
+  const simpleData = React.useMemo(() => {
+    return appState.boardData && appState.boardData
+    .filter(d => !stateFilters.length || stateFilters.some(f => f.Value === d.option.State))
+    .map(d => !appliedSearchText ? d : { ...d, data: d.data.filter(data => Object.keys(data).some(k => `${data[k]}`.toLowerCase().includes(appliedSearchText.toLowerCase()))) })
+    .map(d => <Lane
+      notifications={appState.notifications}
+      key={`lane_${d.option?.Value ?? "fallback"}`}
+      cardForm={actionState.selectedForm}
+      metadata={configState.metadata}
+      refresh={refreshBoard}
+      subscriptions={appState.subscriptions}
+      searchText={appliedSearchText}
+      config={configState.config.primaryEntity}
+      separatorMetadata={configState.separatorMetadata}
+      lane={{...d, data: d.data.filter(r => displayState === "simple" || appState.secondaryData && appState.secondaryData.every(t => t.data.every(tt => tt[`_${configState.config.secondaryEntity.parentLookup}_value`] !== r[configState.metadata.PrimaryIdAttribute])))}} />);
+  }, [appState.boardData, appState.subscriptions, stateFilters, appState.secondaryData, appliedSearchText, appState.notifications, configState.configId]);
+
+  const rowRenderer = ({key, index, parent, isScrolling, isVisible, style}: {
+    key: string;
+    index: number;
+    parent: any;
+    isScrolling: boolean;
+    isVisible: boolean;
+    style: React.CSSProperties
+  }) => (
+    <CellMeasurer
+        cache={cache}
+        columnIndex={0}
+        key={key}
+        parent={parent}
+        rowIndex={index}
+    >
+      <div style={style}>
+        { advancedData[index] }
+      </div>
+    </CellMeasurer>
+  );
 
   return (
     <div style={{height: "100%"}}>
@@ -419,12 +448,29 @@ export const Board = () => {
         </Navbar.Collapse>
       </Navbar>
       <DndContainer>
-        <div id="advancedContainer" style={{ display: "flex", flexDirection: "column", overflow: "inherit" }}>
-          { advancedData }
-        </div>
-        <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "inherit" }}>
-          { simpleData }
-        </div>
+        { displayState === "advanced" &&
+          <div id="advancedContainer" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "inherit" }}>
+            <AutoSizer>
+              {
+                ({ height, width }) =>
+                <List
+                  height={height}
+                  rowCount={advancedData.length}
+                  width={width}
+                  rowRenderer={rowRenderer}
+                  rowHeight={cache.rowHeight}
+                  deferredMeasurementCache={cache}
+                >
+                </List>
+              }
+            </AutoSizer>
+          </div>
+        }
+        { displayState === "simple" &&
+          <div id="flexContainer" style={{ display: "flex", flexDirection: "row", height: "100%", overflow: "inherit" }}>
+            { simpleData }
+          </div>
+        }
       </DndContainer>
     </div>
   );
