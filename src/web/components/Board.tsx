@@ -348,6 +348,7 @@ export const Board = () => {
       secondarySubscriptions={appState.subscriptions}
       config={configState.config.primaryEntity}
       separatorMetadata={configState.separatorMetadata}
+      preventDrag={true}
       secondaryData={appState.secondaryData.map(s => ({ ...s, data: s.data.filter(sd => sd[`_${configState.config.secondaryEntity.parentLookup}_value`] === d[configState.metadata.PrimaryIdAttribute])}))} />)), []);
   }, [displayState, appState.boardData, appState.secondaryData, stateFilters, appliedSearchText, appState.notifications, appState.subscriptions, actionState.selectedSecondaryForm, configState.configId]);
 
@@ -461,7 +462,7 @@ export const Board = () => {
       </Navbar>
       <DndContainer>
         { displayState === "advanced" &&
-          <div id="advancedContainer" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "inherit" }}>
+          <div id="advancedContainer" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "inherit", marginBottom: "5px" }}>
             <AutoSizer>
               {
                 ({ height, width }) =>

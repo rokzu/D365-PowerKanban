@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useMemo } from "react";
+import React, { useContext, useEffect, useState, useMemo, useRef } from "react";
 import { useAppContext, useAppDispatch, AppStateProps, AppStateDispatch } from "../domain/AppState";
 import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, Image, Badge } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
@@ -36,6 +36,7 @@ interface TileProps {
     style?: React.CSSProperties;
     subscriptions: Array<Subscription>;
     refresh: () => Promise<void>;
+    preventDrag?: boolean;
 }
 
 const TileRender = (props: TileProps) => {
@@ -47,6 +48,7 @@ const TileRender = (props: TileProps) => {
     const secondaryMetadata = configState.secondaryMetadata[configState.config.secondaryEntity.logicalName];
     const secondaryConfig = configState.config.secondaryEntity;
     const secondarySeparator = configState.secondarySeparatorMetadata;
+    const stub = useRef(undefined);
 
     const context = {
         showForm: (form: FlyOutForm) => {
@@ -209,7 +211,7 @@ const TileRender = (props: TileProps) => {
     const initCallBack = (identifier: string) => {
         return async () => {
             const funcRef = accessFunc(identifier);
-            const result = await Promise.resolve(funcRef(context));
+            return Promise.resolve(funcRef(context));
         };
     };
 
@@ -218,7 +220,7 @@ const TileRender = (props: TileProps) => {
     console.log(`Tile ${props.data[props.metadata.PrimaryIdAttribute]} is rerendering`);
 
     return (
-        <div ref={drag}>
+        <div ref={ props.preventDrag ? stub : drag}>
             <Card style={{opacity, marginBottom: "5px", borderColor: "#d8d8d8", borderLeftColor: props.borderColor, borderLeftWidth: "3px", ...props.style}}>
                 <Card.Header style={{ padding: "10px" }}>
                     <div style={{display: "flex", flexDirection: "row"}}>
