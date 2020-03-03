@@ -395,7 +395,7 @@ export const Board = () => {
       <UserInputModal title="Verify Deletion" yesCallBack={deleteRecord} finally={hideDeletionVerification} show={showDeletionVerification}>
         <div>Are you sure you want to delete  '{actionState.selectedRecord && actionState.selectedRecord.name}' (ID: {actionState.selectedRecord && actionState.selectedRecord.id})?</div>
       </UserInputModal>
-      <Navbar bg="light" variant="light">
+      <Navbar bg="light" variant="light" fixed="top">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
             <Button title="Config Selector" onClick={openConfigSelector} variant="outline-primary"><span><i className="fa fa-th" aria-hidden="true"></i></span></Button>
