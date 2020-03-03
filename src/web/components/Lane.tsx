@@ -12,6 +12,7 @@ import { BoardViewConfig, BoardEntity } from "../domain/BoardViewConfig";
 import { Subscription } from "../domain/Subscription";
 import { List, CellMeasurerCache, CellMeasurer } from "react-virtualized";
 import AutoSizer from "react-virtualized-auto-sizer";
+import { useMeasurerState } from "../domain/MeasurerState";
 
 interface LaneProps {
     config: BoardEntity;
@@ -30,31 +31,29 @@ interface LaneProps {
 }
 
 const LaneRender = (props: LaneProps) => {
-  const [{ canDrop, isOver }, drop] = useDrop({
-    accept: props.dndType ?? ItemTypes.Tile,
-    drop: () => ({ option: props.lane.option }),
-    collect: monitor => ({
-      isOver: monitor.isOver(),
-      canDrop: monitor.canDrop(),
-    }),
-    canDrop: (item, monitor) => {
-      const typedItem = item as unknown as { id: string; sourceLane: Option } | undefined;
+    const [{ canDrop, isOver }, drop] = useDrop({
+      accept: props.dndType ?? ItemTypes.Tile,
+      drop: () => ({ option: props.lane.option }),
+      collect: monitor => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+      canDrop: (item, monitor) => {
+        const typedItem = item as unknown as { id: string; sourceLane: Option } | undefined;
 
-      if (!typedItem.sourceLane._parsedTransitionData) {
-        return true;
+        if (!typedItem.sourceLane._parsedTransitionData) {
+          return true;
+        }
+
+        return typedItem.sourceLane._parsedTransitionData.some(p => p.to === props.lane.option.Value);
       }
+    });
 
-      return typedItem.sourceLane._parsedTransitionData.some(p => p.to === props.lane.option.Value);
-    }
-  });
-
-  const [cache, setCache] = useState(new CellMeasurerCache({
-    defaultHeight: 400,
-    minHeight: 50,
-    fixedWidth: true,
-  }));
-
+    const listRef = useRef<List>(undefined);
+    const measurerState = useMeasurerState();
     const borderColor = props.lane.option.Color ?? "#3b79b7";
+
+    useEffect(() => listRef && listRef.current && listRef.current.recomputeRowHeights(), [ measurerState.measurementCaches[props.lane.option.Value.toString()] ]);
 
     const isActive = canDrop && isOver;
     let style: React.CSSProperties = {
@@ -92,7 +91,7 @@ const LaneRender = (props: LaneProps) => {
       style: React.CSSProperties
     }) => (
       <CellMeasurer
-          cache={cache}
+          cache={measurerState.measurementCaches[props.lane.option.Value.toString()]}
           columnIndex={0}
           key={key}
           parent={parent}
@@ -107,25 +106,32 @@ const LaneRender = (props: LaneProps) => {
     return (
         <div ref={drop} style={{ ...style, minWidth: props.minWidth ?? "400px", margin: "5px", flex: "1 1 0" }}>
             <Card style={{borderColor: "#d8d8d8", height: "100%", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
+                <Card.Header>
+                  <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
+                </Card.Header>
                 <Card.Body>
-                    <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
                     {
-                      props.cardForm &&
+                      props.cardForm && !props.isSecondaryLane &&
                       <AutoSizer>
                         {
                           ({ height, width }) =>
                             <List
+                              ref={listRef}
                               className="List"
                               height={height}
                               rowCount={props.lane.data.length}
                               width={width}
                               rowRenderer={rowRenderer}
-                              rowHeight={cache.rowHeight}
-                              deferredMeasurementCache={cache}
+                              rowHeight={measurerState.measurementCaches[props.lane.option.Value.toString()].rowHeight}
+                              deferredMeasurementCache={measurerState.measurementCaches[props.lane.option.Value.toString()]}
                             >
                             </List>
                         }
                       </AutoSizer>
+                    }
+                    {
+                      // No virtualization if secondary lane as this is an already virtualized list
+                      props.cardForm && props.isSecondaryLane && props.lane.data.map(mapDataToTile)
                     }
                 </Card.Body>
             </Card>

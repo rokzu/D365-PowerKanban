@@ -16,6 +16,7 @@ import { BoardViewConfig, PrimaryEntity, BoardEntity } from "../domain/BoardView
 import { Subscription } from "../domain/Subscription";
 import { useConfigState } from "../domain/ConfigState";
 import { useActionContext, DisplayType, useActionDispatch } from "../domain/ActionState";
+import { useMeasurerDispatch } from "../domain/MeasurerState";
 
 interface TileProps {
     borderColor: string;
@@ -41,6 +42,7 @@ const TileRender = (props: TileProps) => {
     const appDispatch = useAppDispatch();
     const configState = useConfigState();
     const actionDispatch = useActionDispatch();
+    const measurerDispatch = useMeasurerDispatch();
 
     const secondaryMetadata = configState.secondaryMetadata[configState.config.secondaryEntity.logicalName];
     const secondaryConfig = configState.config.secondaryEntity;
@@ -105,7 +107,7 @@ const TileRender = (props: TileProps) => {
                         update["statecode"] = targetOption.State;
                     }
 
-                    WebApiClient.Update({ entityName: props.metadata.LogicalName, entityId: itemId, entity: update })
+                    await WebApiClient.Update({ entityName: props.metadata.LogicalName, entityId: itemId, entity: update })
                     .then((r: any) => {
                         actionDispatch({ type: "setWorkIndicator", payload: false });
                         return props.refresh();
@@ -114,6 +116,8 @@ const TileRender = (props: TileProps) => {
                         actionDispatch({ type: "setWorkIndicator", payload: false });
                     });
                 }
+
+                measurerDispatch({ type: "resetMeasurementCache" });
             };
 
             asyncEnd(item, monitor);
@@ -151,6 +155,7 @@ const TileRender = (props: TileProps) => {
 
         if (result && result.savedEntityReference) {
             props.refresh();
+            measurerDispatch({ type: "resetMeasurementCache" });
         }
     };
 
@@ -265,7 +270,7 @@ const TileRender = (props: TileProps) => {
                             {secondaryMetadata.DisplayCollectionName.UserLocalizedLabel.Label}
                         </span>
                         <Button style={{marginLeft: "5px"}} variant="outline-secondary" onClick={createNewSecondary}><span><i className="fa fa-plus-square" aria-hidden="true"></i></span></Button>
-                        <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "auto", height: "400px" }}>
+                        <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflow: "auto" }}>
                             {
                                 props.secondaryData.map(d => <Lane
                                 refresh={props.refresh}
@@ -273,7 +278,8 @@ const TileRender = (props: TileProps) => {
                                 searchText={props.searchText}
                                 subscriptions={props.secondarySubscriptions}
                                 dndType={`${ItemTypes.Tile}_${props.data[props.metadata.PrimaryIdAttribute]}`}
-                                key={`lane_${d.option?.Value ?? "fallback"}`} minWidth="300px"
+                                key={`lane_${d.option?.Value ?? "fallback"}`}
+                                minWidth="300px"
                                 cardForm={props.selectedSecondaryForm}
                                 metadata={secondaryMetadata}
                                 lane={d}

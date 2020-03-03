@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl, Badge, InputGroup, Spinner } from "react-bootstrap";
 import WebApiClient from "xrm-webapi-client";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
@@ -17,6 +17,7 @@ import { useConfigContext } from "../domain/ConfigState";
 import { useActionContext } from "../domain/ActionState";
 import { List, CellMeasurerCache, CellMeasurer } from "react-virtualized";
 import AutoSizer from "react-virtualized-auto-sizer";
+import { useMeasurerState, useMeasurerContext } from "../domain/MeasurerState";
 
 const determineAttributeUrl = (attribute: Attribute) => {
   if (attribute.AttributeType === "Picklist") {
@@ -64,12 +65,9 @@ export const Board = () => {
   const [ appState, appDispatch ] = useAppContext();
   const [ actionState, actionDispatch ] = useActionContext();
   const [ configState, configDispatch ] = useConfigContext();
-  
-  const [cache, setCache] = useState(new CellMeasurerCache({
-    defaultHeight: 400,
-    minHeight: 50,
-    fixedWidth: true,
-  }));
+  const [ measurerState, measurerDispatch ] = useMeasurerContext();
+
+  const advancedList = useRef<List>(undefined);
 
   const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
   const [ secondaryViews, setSecondaryViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
@@ -117,6 +115,12 @@ export const Board = () => {
       const metadata = await fetchMetadata(config.primaryEntity.logicalName);
       const attributeMetadata = await fetchSeparatorMetadata(config.primaryEntity.logicalName, config.primaryEntity.swimLaneSource, metadata);
       const stateMetadata = await fetchSeparatorMetadata(config.primaryEntity.logicalName, "statecode", metadata);
+
+      const lanes = attributeMetadata.AttributeType === "Boolean"
+        ? [ attributeMetadata.OptionSet.FalseOption.Value, attributeMetadata.OptionSet.TrueOption.Value ]
+        : attributeMetadata.OptionSet.Options.map(o => o.Value);
+
+      measurerDispatch({ type: "initializeCaches", payload: [ "advanced", ...lanes.map(o => o.toString()) ] });
 
       const notificationMetadata = await fetchMetadata("oss_notification");
       configDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
@@ -220,6 +224,8 @@ export const Board = () => {
     }
   };
 
+  useEffect(() => advancedList && advancedList.current && advancedList.current.recomputeRowHeights(), [ measurerState.measurementCaches["advanced"] ]);
+
   useEffect(() => {
     initializeConfig();
   }, [ configState.configId ]);
@@ -245,6 +251,7 @@ export const Board = () => {
 
     actionDispatch({ type: "setSelectedView", payload: view });
     refresh(appDispatch, appState, configState, actionDispatch, actionState, view.fetchxml);
+    measurerDispatch({ type: "resetMeasurementCache" });
   };
 
   const setForm = (event: any) => {
@@ -253,6 +260,7 @@ export const Board = () => {
 
     actionDispatch({ type: "setSelectedForm", payload: form });
     refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, form);
+    measurerDispatch({ type: "resetMeasurementCache" });
   };
 
   const setSecondaryView = (event: any) => {
@@ -261,6 +269,7 @@ export const Board = () => {
 
     actionDispatch({ type: "setSelectedSecondaryView", payload: view });
     refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, undefined, view.fetchxml, undefined);
+    measurerDispatch({ type: "resetMeasurementCache" });
   };
 
   const setSecondaryForm = (event: any) => {
@@ -269,6 +278,7 @@ export const Board = () => {
 
     actionDispatch({ type: "setSelectedSecondaryForm", payload: form });
     refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, undefined, undefined, form);
+    measurerDispatch({ type: "resetMeasurementCache" });
   };
 
   const setStateFilter = (event: any) => {
@@ -295,6 +305,7 @@ export const Board = () => {
   };
 
   const search = () => {
+    measurerDispatch({ type: "resetMeasurementCache" });
     setAppliedSearch(searchText || undefined);
   };
 
@@ -304,8 +315,9 @@ export const Board = () => {
     }
   };
 
-  const refreshBoard = () => {
-    return refresh(appDispatch, appState, configState, actionDispatch, actionState);
+  const refreshBoard = async () => {
+    await refresh(appDispatch, appState, configState, actionDispatch, actionState);
+    measurerDispatch({ type: "resetMeasurementCache" });
   };
 
   const openConfigSelector = () => {
@@ -365,7 +377,7 @@ export const Board = () => {
     style: React.CSSProperties
   }) => (
     <CellMeasurer
-        cache={cache}
+        cache={measurerState.measurementCaches["advanced"]}
         columnIndex={0}
         key={key}
         parent={parent}
@@ -378,11 +390,11 @@ export const Board = () => {
   );
 
   return (
-    <div style={{height: "100%"}}>
+    <div style={{height: "100%", display: "flex", flexDirection: "column" }}>
       <UserInputModal title="Verify Deletion" yesCallBack={deleteRecord} finally={hideDeletionVerification} show={showDeletionVerification}>
         <div>Are you sure you want to delete  '{actionState.selectedRecord && actionState.selectedRecord.name}' (ID: {actionState.selectedRecord && actionState.selectedRecord.id})?</div>
       </UserInputModal>
-      <Navbar bg="light" variant="light" fixed="top">
+      <Navbar bg="light" variant="light">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
             <Button title="Config Selector" onClick={openConfigSelector} variant="outline-primary"><span><i className="fa fa-th" aria-hidden="true"></i></span></Button>
@@ -454,12 +466,13 @@ export const Board = () => {
               {
                 ({ height, width }) =>
                 <List
+                  ref={advancedList}
                   height={height}
                   rowCount={advancedData.length}
                   width={width}
                   rowRenderer={rowRenderer}
-                  rowHeight={cache.rowHeight}
-                  deferredMeasurementCache={cache}
+                  rowHeight={measurerState.measurementCaches["advanced"].rowHeight}
+                  deferredMeasurementCache={measurerState.measurementCaches["advanced"]}
                 >
                 </List>
               }
@@ -467,7 +480,7 @@ export const Board = () => {
           </div>
         }
         { displayState === "simple" &&
-          <div id="flexContainer" style={{ display: "flex", flexDirection: "row", height: "100%", overflow: "inherit" }}>
+          <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflowX: "auto", overflowY: "hidden", flex: "content", marginBottom: "5px" }}>
             { simpleData }
           </div>
         }
