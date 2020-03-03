@@ -53,7 +53,7 @@ const LaneRender = (props: LaneProps) => {
     const measurerState = useMeasurerState();
     const borderColor = props.lane.option.Color ?? "#3b79b7";
 
-    useEffect(() => listRef && listRef.current && listRef.current.recomputeRowHeights(), [ measurerState.measurementCaches[props.lane.option.Value.toString()] ]);
+    useEffect(() => void listRef && listRef.current && listRef.current.recomputeRowHeights(), [ measurerState.measurementCaches[props.lane.option.Value.toString()] ]);
 
     const isActive = canDrop && isOver;
     let style: React.CSSProperties = {
@@ -104,7 +104,7 @@ const LaneRender = (props: LaneProps) => {
     );
 
     return (
-        <div ref={drop} style={{ ...style, minWidth: props.minWidth ?? "400px", margin: "5px", flex: "1 1 0" }}>
+        <div ref={drop} style={{ ...style, minWidth: props.minWidth ?? "400px", margin: "5px", flex: "1" }}>
             <Card style={{borderColor: "#d8d8d8", height: "100%", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
                 <Card.Header>
                   <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>

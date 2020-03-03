@@ -224,7 +224,7 @@ export const Board = () => {
     }
   };
 
-  useEffect(() => advancedList && advancedList.current && advancedList.current.recomputeRowHeights(), [ measurerState.measurementCaches["advanced"] ]);
+  useEffect(() => void advancedList && advancedList.current && advancedList.current.recomputeRowHeights(), [ measurerState.measurementCaches["advanced"] ]);
 
   useEffect(() => {
     initializeConfig();
@@ -481,7 +481,7 @@ export const Board = () => {
           </div>
         }
         { displayState === "simple" &&
-          <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflowX: "auto", overflowY: "hidden", flex: "content", marginBottom: "5px" }}>
+          <div id="flexContainer" style={{ display: "flex", flexDirection: "row", overflowX: "auto", overflowY: "hidden", flex: "1", marginBottom: "5px" }}>
             { simpleData }
           </div>
         }

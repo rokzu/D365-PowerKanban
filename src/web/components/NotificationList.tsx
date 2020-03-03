@@ -67,7 +67,7 @@ export const NotificationList = (props: NotificationListProps) => {
               <div style={{display: "flex", overflow: "auto", flexDirection: "column" }}>
                 {
                   columns.filter(c => ["createdby", "modifiedon", "modifiedby", "modifiedonbehalfby", eventMeta.PrimaryIdAttribute].every(s => s !== c)).map(c =>
-                    <div key={`currentRecord_${c}`} style={{ minWidth: "200px", margin: "5px", flex: "1 1 0" }}>
+                    <div key={`currentRecord_${c}`} style={{ minWidth: "200px", margin: "5px", flex: "1" }}>
                       <FieldRow type="footer" metadata={eventMeta} data={eventRecord} cells={[ { field: c } ]} />
                     </div>
                   )

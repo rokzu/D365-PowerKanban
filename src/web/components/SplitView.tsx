@@ -34,12 +34,12 @@ export const SplitView = (props: SplitViewProps) => {
                 <Board />
             </div>
             { !!actionState.selectedRecord && actionState.selectedRecordDisplayType === DisplayType.recordForm &&
-                <div style={{minWidth: "400px", borderLeft: "1px solid", flex: "1 1 0" }}>
+                <div style={{minWidth: "400px", borderLeft: "1px solid", flex: "1" }}>
                     <SideBySideForm />
                 </div>
             }
             { !!actionState.selectedRecord && actionState.selectedRecordDisplayType === DisplayType.notifications &&
-                <div style={{minWidth: "400px", borderLeft: "1px solid", flex: "1 1 0" }}>
+                <div style={{minWidth: "400px", borderLeft: "1px solid", flex: "1" }}>
                     <NotificationList />
                 </div>
             }
