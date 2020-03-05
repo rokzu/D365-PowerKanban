@@ -23,7 +23,7 @@ const FieldRowRender = (props: FieldRowProps) => {
             return text;
         }
 
-        const substrings = text.split(new RegExp(`(${RegexEscape(props.searchString)})`, "gi"));
+        const substrings = text.toString().split(new RegExp(`(${RegexEscape(props.searchString)})`, "gi"));
         return (<span>
             {
                 substrings.map((s, i) => (<span key={i} style={s.toLowerCase() === props.searchString.toLowerCase() ? { backgroundColor: "yellow" } : {}}>{s}</span>))

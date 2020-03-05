@@ -119,7 +119,7 @@ const TileRender = (props: TileProps) => {
                     });
                 }
 
-                measurerDispatch({ type: "resetMeasurementCache" });
+                measurerDispatch.resetMeasurementCache();
             };
 
             asyncEnd(item, monitor);
@@ -157,7 +157,7 @@ const TileRender = (props: TileProps) => {
 
         if (result && result.savedEntityReference) {
             props.refresh();
-            measurerDispatch({ type: "resetMeasurementCache" });
+            measurerDispatch.resetMeasurementCache();
         }
     };
 
@@ -244,7 +244,7 @@ const TileRender = (props: TileProps) => {
                         <DropdownButton drop="left" id="displaySelector" variant="outline-secondary" title="" style={{ margintop: "5px" }}>
                             <Dropdown.Item onClick={setSelectedRecord} as="button" id="setSelected"><span><i className="fa fa-angle-double-right" aria-hidden="true"></i></span> Open in split screen</Dropdown.Item>
                             <Dropdown.Item onClick={openInNewTab} as="button" id="setSelected"><span><i className="fa fa-window-maximize" aria-hidden="true"></i></span> Open in new window</Dropdown.Item>
-                            { configState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><span><i className="fa fa-square" aria-hidden="true"></i></span> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
+                            { configState.config.secondaryEntity && <Dropdown.Item onClick={createNewSecondary} as="button" id="addSecondary"><span><i className="fa fa-plus" aria-hidden="true"></i></span> Create new {secondaryMetadata.DisplayName.UserLocalizedLabel.Label}</Dropdown.Item> }
                             {
                                 props.config.customButtons && props.config.customButtons.length &&
                                 <>

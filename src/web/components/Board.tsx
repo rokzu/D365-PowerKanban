@@ -94,6 +94,7 @@ export const Board = () => {
     try {
       appDispatch({ type: "setSecondaryData", payload: [] });
       appDispatch({ type: "setBoardData", payload: [] });
+      measurerDispatch.resetMeasurementCache();
 
       const configId = await getConfigId();
 
@@ -120,7 +121,7 @@ export const Board = () => {
         ? [ attributeMetadata.OptionSet.FalseOption.Value, attributeMetadata.OptionSet.TrueOption.Value ]
         : attributeMetadata.OptionSet.Options.map(o => o.Value);
 
-      measurerDispatch({ type: "initializeCaches", payload: [ "advanced", ...lanes.map(o => o.toString()) ] });
+      measurerDispatch.initializeCaches([ "advanced", ...lanes.map(o => o.toString()) ]);
 
       const notificationMetadata = await fetchMetadata("oss_notification");
       configDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
@@ -251,7 +252,7 @@ export const Board = () => {
 
     actionDispatch({ type: "setSelectedView", payload: view });
     refresh(appDispatch, appState, configState, actionDispatch, actionState, view.fetchxml);
-    measurerDispatch({ type: "resetMeasurementCache" });
+    measurerDispatch.resetMeasurementCache();
   };
 
   const setForm = (event: any) => {
@@ -260,7 +261,7 @@ export const Board = () => {
 
     actionDispatch({ type: "setSelectedForm", payload: form });
     refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, form);
-    measurerDispatch({ type: "resetMeasurementCache" });
+    measurerDispatch.resetMeasurementCache();
   };
 
   const setSecondaryView = (event: any) => {
@@ -269,7 +270,7 @@ export const Board = () => {
 
     actionDispatch({ type: "setSelectedSecondaryView", payload: view });
     refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, undefined, view.fetchxml, undefined);
-    measurerDispatch({ type: "resetMeasurementCache" });
+    measurerDispatch.resetMeasurementCache();
   };
 
   const setSecondaryForm = (event: any) => {
@@ -278,7 +279,7 @@ export const Board = () => {
 
     actionDispatch({ type: "setSelectedSecondaryForm", payload: form });
     refresh(appDispatch, appState, configState, actionDispatch, actionState, undefined, undefined, undefined, form);
-    measurerDispatch({ type: "resetMeasurementCache" });
+    measurerDispatch.resetMeasurementCache();
   };
 
   const setStateFilter = (event: any) => {
@@ -305,7 +306,7 @@ export const Board = () => {
   };
 
   const search = () => {
-    measurerDispatch({ type: "resetMeasurementCache" });
+    measurerDispatch.resetMeasurementCache();
     setAppliedSearch(searchText || undefined);
   };
 
@@ -317,7 +318,7 @@ export const Board = () => {
 
   const refreshBoard = async () => {
     await refresh(appDispatch, appState, configState, actionDispatch, actionState);
-    measurerDispatch({ type: "resetMeasurementCache" });
+    measurerDispatch.resetMeasurementCache();
   };
 
   const openConfigSelector = () => {

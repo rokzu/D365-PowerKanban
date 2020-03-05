@@ -20,26 +20,40 @@ const defaultOptions = {
     fixedWidth: true
 };
 
+type ActionCalls = {
+    resetMeasurementCache: () => void;
+    initializeCaches: (keys: Array<string>) => void;
+};
+
+const createActions = (dispatch: React.Dispatch<Action>) => {
+    return {
+        resetMeasurementCache: () => dispatch({ type: "resetMeasurementCache" }),
+        initializeCaches: (keys: Array<string>) => dispatch({ type: "initializeCaches", payload: keys })
+    };
+};
+
 function stateReducer(state: MeasurerStateProps, action: Action): MeasurerStateProps {
     switch (action.type) {
         case "resetMeasurementCache": {
+            console.log("Resetting measurement cache");
             return {...state, measurementCaches: Object.keys(state.measurementCaches).reduce((all, cur) => { all[cur] = new CellMeasurerCache(defaultOptions); return all; }, {} as { [key: string]: CellMeasurerCache })};
         }
         case "initializeCaches": {
+            console.log("Initializing caches");
             return {...state, measurementCaches: action.payload.reduce((all, cur) => { all[cur] = new CellMeasurerCache(defaultOptions); return all; }, {} as { [key: string]: CellMeasurerCache })};
         }
     }
 }
 
 const MeasurerState = React.createContext<MeasurerStateProps | undefined>(undefined);
-const MeasurerDispatch = React.createContext<MeasurerStateDispatch | undefined>(undefined);
+const MeasurerDispatch = React.createContext<ActionCalls | undefined>(undefined);
 
 export function MeasurerStateProvider({ children }: MeasurerContextProps) {
     const [state, dispatch] = React.useReducer(stateReducer, { measurementCaches: {} });
 
     return (
         <MeasurerState.Provider value={state}>
-            <MeasurerDispatch.Provider value={dispatch}>
+            <MeasurerDispatch.Provider value={createActions(dispatch)}>
                 {children}
             </MeasurerDispatch.Provider>
         </MeasurerState.Provider>
@@ -66,6 +80,6 @@ export function useMeasurerDispatch() {
     return context;
 }
 
-export function useMeasurerContext(): [ MeasurerStateProps, MeasurerStateDispatch ] {
+export function useMeasurerContext(): [ MeasurerStateProps, ActionCalls ] {
     return [ useMeasurerState(), useMeasurerDispatch() ];
 }

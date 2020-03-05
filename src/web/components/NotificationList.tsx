@@ -57,7 +57,7 @@ export const NotificationList = (props: NotificationListProps) => {
 
   return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <Button title="Close" onClick={closeSideBySide} style={{ position: "absolute", zIndex: 1, top: "45%", left: "-18px" }}></Button>
+        <Button title="Close" onClick={closeSideBySide} style={{ position: "absolute", zIndex: 1, top: "45%", left: "-18px" }}><span><i className="fa fa-window-close" aria-hidden="true"></i></span></Button>
         <Button title="Mark as read and close" onClick={clearAndRefresh} style={{ position: "absolute", zIndex: 1, top: "50%", left: "-18px" }}><span><i className="fa fa-eye-slash" aria-hidden="true"></i></span></Button>
         <Button title="Open in new window" onClick={openInNewTab} style={{ position: "absolute", zIndex: 1, top: "55%", left: "-18px" }}><span><i className="fa fa-window-maximize" aria-hidden="true"></i></span></Button>
         { eventRecord &&
