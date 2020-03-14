@@ -91,7 +91,7 @@ const LaneRender = (props: LaneProps) => {
       style: React.CSSProperties
     }) => (
       <CellMeasurer
-          cache={measurerState.measurementCaches[props.lane.option.Value.toString()]}
+          cache={measurerState.measurementCaches[`${props.isSecondaryLane ? "secondary" : "primary"}-${props.lane.option.Value.toString()}`]}
           columnIndex={0}
           key={key}
           parent={parent}
@@ -105,13 +105,13 @@ const LaneRender = (props: LaneProps) => {
 
     return (
         <div ref={drop} style={{ ...style, minWidth: props.minWidth ?? "400px", margin: "5px", flex: "1" }}>
-            <Card style={{borderColor: "#d8d8d8", height: "100%", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
+            <Card style={{borderColor: "#d8d8d8", height: props.isSecondaryLane ? "600px" : "100%", borderTopColor: borderColor, borderTopWidth: "3px", color: "#333333"}}>
                 <Card.Header>
                   <Card.Title style={{color: "#045999"}}>{props.lane.option.Label.UserLocalizedLabel.Label}</Card.Title>
                 </Card.Header>
                 <Card.Body>
                     {
-                      props.cardForm && !props.isSecondaryLane &&
+                      props.cardForm &&
                       <AutoSizer>
                         {
                           ({ height, width }) =>
@@ -122,16 +122,12 @@ const LaneRender = (props: LaneProps) => {
                               rowCount={props.lane.data.length}
                               width={width}
                               rowRenderer={rowRenderer}
-                              rowHeight={measurerState.measurementCaches[props.lane.option.Value.toString()].rowHeight}
-                              deferredMeasurementCache={measurerState.measurementCaches[props.lane.option.Value.toString()]}
+                              rowHeight={measurerState.measurementCaches[`${props.isSecondaryLane ? "secondary" : "primary"}-${props.lane.option.Value.toString()}`].rowHeight}
+                              deferredMeasurementCache={measurerState.measurementCaches[`${props.isSecondaryLane ? "secondary" : "primary"}-${props.lane.option.Value.toString()}`]}
                             >
                             </List>
                         }
                       </AutoSizer>
-                    }
-                    {
-                      // No virtualization if secondary lane as this is an already virtualized list
-                      props.cardForm && props.isSecondaryLane && props.lane.data.map(mapDataToTile)
                     }
                 </Card.Body>
             </Card>

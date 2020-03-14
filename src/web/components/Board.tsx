@@ -121,7 +121,7 @@ export const Board = () => {
         ? [ attributeMetadata.OptionSet.FalseOption.Value, attributeMetadata.OptionSet.TrueOption.Value ]
         : attributeMetadata.OptionSet.Options.map(o => o.Value);
 
-      measurerDispatch.initializeCaches([ "advanced", ...lanes.map(o => o.toString()) ]);
+      measurerDispatch.initializeCaches([ "advanced", ...lanes.map(o => `primary-${o.toString()}`) ]);
 
       const notificationMetadata = await fetchMetadata("oss_notification");
       configDispatch({ type: "setSecondaryMetadata", payload: { entity: "oss_notification", data: notificationMetadata } });
@@ -135,6 +135,12 @@ export const Board = () => {
 
         configDispatch({ type: "setSecondaryMetadata", payload: { entity: config.secondaryEntity.logicalName, data: secondaryMetadata } });
         configDispatch({ type: "setSecondarySeparatorMetadata", payload: secondaryAttributeMetadata });
+
+        const secondaryLanes = secondaryAttributeMetadata.AttributeType === "Boolean"
+        ? [ secondaryAttributeMetadata.OptionSet.FalseOption.Value, secondaryAttributeMetadata.OptionSet.TrueOption.Value ]
+        : secondaryAttributeMetadata.OptionSet.Options.map(o => o.Value);
+
+        measurerDispatch.initializeCaches([ "advanced", ...lanes.map(o => `primary-${o.toString()}`), ...secondaryLanes.map(o => `secondary-${o.toString()}`) ]);
       }
 
       configDispatch({ type: "setConfig", payload: config });
@@ -475,6 +481,8 @@ export const Board = () => {
                   rowRenderer={rowRenderer}
                   rowHeight={measurerState.measurementCaches["advanced"].rowHeight}
                   deferredMeasurementCache={measurerState.measurementCaches["advanced"]}
+                  subscriptions={appState.subscriptions}
+                  notifications={appState.notifications}
                 >
                 </List>
               }
