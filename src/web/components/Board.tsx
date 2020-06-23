@@ -217,7 +217,7 @@ export const Board = () => {
             additionalCondition: {
               attribute: config.secondaryEntity.parentLookup,
               operator: "in",
-              values: data.length > 1 ? data.reduce((all, d) => [...all, ...d.data.map(laneData => laneData[metadata.PrimaryIdAttribute] as string)], [] as Array<string>) : ["00000000-0000-0000-0000-000000000000"]
+              values: data.some(d => d.data.length > 1) ? data.reduce((all, d) => [...all, ...d.data.map(laneData => laneData[metadata.PrimaryIdAttribute] as string)], [] as Array<string>) : ["00000000-0000-0000-0000-000000000000"]
             }
           }
         );
