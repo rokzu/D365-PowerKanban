@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import * as React from "react";
 import { useAppContext } from "../domain/AppState";
 import { Button, Form } from "react-bootstrap";
 
@@ -11,7 +11,7 @@ interface ExternalFormProps {
 
 export const ExternalForm = (props: ExternalFormProps) => {
     const [ actionState, actionDispatch ] = useActionContext();
-    const [ formData, setFormData ] = useState({} as any);
+    const [ formData, setFormData ] = React.useState({} as any);
 
     const noCallBack = () => {
         actionState.flyOutForm.resolve({

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import * as React from "react";
 import { useAppContext } from "../domain/AppState";
 import { Button, Form } from "react-bootstrap";
 
@@ -6,7 +6,7 @@ import { fetchData, refresh } from "../domain/fetchData";
 import { UserInputModal } from "./UserInputModalProps";
 import { useActionContext } from "../domain/ActionState";
 import { useConfigDispatch } from "../domain/ConfigState";
-import WebApiClient from "xrm-webapi-client";
+import * as WebApiClient from "xrm-webapi-client";
 import { formatGuid } from "../domain/GuidFormatter";
 
 interface ConfigSelectorProps {
@@ -15,9 +15,9 @@ interface ConfigSelectorProps {
 export const ConfigSelector = (props: ConfigSelectorProps) => {
     const [ actionState, actionDispatch ] = useActionContext();
     const configDispatch = useConfigDispatch();
-    const [ configId, setConfigId ] = useState(undefined);
-    const [ configs, setConfigs ] = useState([]);
-    const [ makeDefault, setMakeDefault ] = useState(false);
+    const [ configId, setConfigId ] = React.useState(undefined);
+    const [ configs, setConfigs ] = React.useState([]);
+    const [ makeDefault, setMakeDefault ] = React.useState(false);
 
     const yesCallBack = async() => {
         const id = configId;

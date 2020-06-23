@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import * as React from "react";
 import { SavedQuery } from "./SavedQuery";
 import { CardForm } from "./CardForm";
 import { FlyOutForm } from "./FlyOutForm";
@@ -13,7 +13,7 @@ type Action = { type: "setSelectedRecord", payload: Xrm.LookupValue }
     | { type: "setSelectedForm", payload: CardForm }
     | { type: "setSelectedSecondaryView", payload: SavedQuery }
     | { type: "setSelectedSecondaryForm", payload: CardForm }
-    | { type: "setProgressText", payload: string }
+    | { type: "setProgressText", payload: string | undefined }
     | { type: "setWorkIndicator", payload: boolean}
     | { type: "setSelectedRecordDisplayType", payload: DisplayType }
     | { type: "setFlyOutForm", payload: FlyOutForm }
@@ -43,13 +43,13 @@ type ActionContextProps = {
 const parseLayoutColumns = (layoutXml: string): Array<string> => {
     const parser = new DOMParser();
     const xml = parser.parseFromString(layoutXml, "application/xml");
-    return Array.from(xml.documentElement.getElementsByTagName("cell")).map(c => c.getAttribute("name"));
+    return Array.from(xml.documentElement.getElementsByTagName("cell")).map(c => c.getAttribute("name")!);
 };
 
 const parseLinksFromFetch = (fetchXml: string): Array<{ entityName: string, alias: string }> => {
     const parser = new DOMParser();
     const xml = parser.parseFromString(fetchXml, "application/xml");
-    return Array.from(xml.documentElement.getElementsByTagName("link-entity")).map(c => ({ entityName: c.getAttribute("name"), alias: c.getAttribute("alias")}));
+    return Array.from(xml.documentElement.getElementsByTagName("link-entity")).map(c => ({ entityName: c.getAttribute("name")!, alias: c.getAttribute("alias")!}));
 };
 
 function stateReducer(state: ActionStateProps, action: Action): ActionStateProps {
@@ -103,7 +103,7 @@ export function ActionStateProvider({ children }: ActionContextProps) {
 }
 
 export function useActionState() {
-    const context = useContext(ActionState);
+    const context = React.useContext(ActionState);
 
     if (!context) {
         throw new Error("useActionState must be used within a state provider!");
@@ -113,7 +113,7 @@ export function useActionState() {
 }
 
 export function useActionDispatch() {
-    const context = useContext(ActionDispatch);
+    const context = React.useContext(ActionDispatch);
 
     if (!context) {
         throw new Error("useActionDispatch must be used within a state provider!");

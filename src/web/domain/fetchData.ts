@@ -1,7 +1,7 @@
 import { BoardLane } from "./BoardLane";
 import { BoardViewConfig } from "./BoardViewConfig";
 import { Attribute, Metadata } from "./Metadata";
-import WebApiClient from "xrm-webapi-client";
+import * as WebApiClient from "xrm-webapi-client";
 import { CardForm, CardSegment } from "./CardForm";
 import { AppStateDispatch, AppStateProps } from "./AppState";
 import { OperationalError } from "bluebird";

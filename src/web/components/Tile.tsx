@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useMemo, useRef } from "react";
+import * as React from "react";
 import { useAppContext, useAppDispatch, AppStateProps, AppStateDispatch } from "../domain/AppState";
 import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, Image, Badge } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
@@ -8,7 +8,7 @@ import { BoardLane } from "../domain/BoardLane";
 import { Lane } from "./Lane";
 import { ItemTypes } from "../domain/ItemTypes";
 import { refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
-import WebApiClient from "xrm-webapi-client";
+import * as WebApiClient from "xrm-webapi-client";
 import { useDrag, DragSourceMonitor } from "react-dnd";
 import { FlyOutForm } from "../domain/FlyOutForm";
 import { Notification } from "../domain/Notification";
@@ -48,7 +48,7 @@ const TileRender = (props: TileProps) => {
     const secondaryMetadata = configState.secondaryMetadata[configState.config.secondaryEntity.logicalName];
     const secondaryConfig = configState.config.secondaryEntity;
     const secondarySeparator = configState.secondarySeparatorMetadata;
-    const stub = useRef(undefined);
+    const stub = React.useRef(undefined);
 
     const context = {
         showForm: (form: FlyOutForm) => {
@@ -72,8 +72,8 @@ const TileRender = (props: TileProps) => {
         return path.reduce((all, cur) => !all ? undefined : (all as any)[cur], window);
     };
 
-    const [{ isDragging }, drag] = useDrag({
-        item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile },
+    const [{ isDragging }, drag] = useDrag<{ id: string; sourceLane: Option, type: string } | undefined, undefined, {isDragging: boolean}>({
+        item: { id: props.data[props.metadata.PrimaryIdAttribute], sourceLane: props.laneOption, type: props.dndType ?? ItemTypes.Tile } as any,
         end: (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
             const asyncEnd = async (item: { id: string; sourceLane: Option } | undefined, monitor: DragSourceMonitor) => {
                 const dropResult = monitor.getDropResult();
@@ -90,7 +90,7 @@ const TileRender = (props: TileProps) => {
                         target: dropResult.option
                     };
 
-                    const funcRef = accessFunc(props.config.transitionCallback);
+                    const funcRef = accessFunc(props.config.transitionCallback) as any;
 
                     const result = await Promise.resolve(funcRef(eventContext));
                     preventDefault = result?.preventDefault;
@@ -124,8 +124,8 @@ const TileRender = (props: TileProps) => {
 
             asyncEnd(item, monitor);
         },
-        collect: monitor => ({
-          isDragging: monitor.isDragging(),
+        collect: (monitor) => ({
+          isDragging: monitor.isDragging()
         })
     });
 
@@ -210,12 +210,12 @@ const TileRender = (props: TileProps) => {
 
     const initCallBack = (identifier: string) => {
         return async () => {
-            const funcRef = accessFunc(identifier);
+            const funcRef = accessFunc(identifier) as any;
             return Promise.resolve(funcRef(context));
         };
     };
 
-    const isSubscribed = useMemo(() => props.subscriptions?.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]), [props.subscriptions]);
+    const isSubscribed = React.useMemo(() => props.subscriptions?.some(s => s[`_oss_${props.metadata.LogicalName}id_value`] === props.data[props.metadata.PrimaryIdAttribute]), [props.subscriptions]);
 
     console.log(`Tile ${props.data[props.metadata.PrimaryIdAttribute]} is rerendering`);
 

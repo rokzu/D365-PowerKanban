@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import * as React from "react";
 import { Col, Card } from "react-bootstrap";
 import { Tile } from "./Tile";
 import { BoardLane } from "../domain/BoardLane";
@@ -49,11 +49,11 @@ const LaneRender = (props: LaneProps) => {
       }
     });
 
-    const listRef = useRef<List>(undefined);
+    const listRef = React.useRef<List>(undefined);
     const measurerState = useMeasurerState();
     const borderColor = props.lane.option.Color ?? "#3b79b7";
 
-    useEffect(() => void listRef && listRef.current && listRef.current.recomputeRowHeights(), [ measurerState.measurementCaches[props.lane.option.Value.toString()] ]);
+    React.useEffect(() => void listRef && listRef.current && listRef.current.recomputeRowHeights(), [ measurerState.measurementCaches[props.lane.option.Value.toString()] ]);
 
     const isActive = canDrop && isOver;
     let style: React.CSSProperties = {

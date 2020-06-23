@@ -1,5 +1,4 @@
-import React, { useContext } from "react";
-import { ParseSearch } from "./ParseSearch";
+import * as React from "react";
 import { BoardViewConfig } from "./BoardViewConfig";
 import { Metadata, Attribute } from "./Metadata";
 import { CardForm } from "./CardForm";
@@ -80,26 +79,20 @@ function stateReducer(state: ConfigStateProps, action: Action): ConfigStateProps
 const ConfigState = React.createContext<ConfigStateProps | undefined>(undefined);
 const ConfigDispatch = React.createContext<ConfigDispatch | undefined>(undefined);
 
-export const ConfigStateProvider: React.FC = ({ children }) => {
-    const search = ParseSearch();
-
-    const appId = search["appid"];
-
-    const [state, dispatch] = React.useReducer(stateReducer, {
-        appId
-    });
+export const ConfigStateProvider: React.FC<ConfigStateProps> = (props) => {
+    const [state, dispatch] = React.useReducer(stateReducer, props ?? {});
 
     return (
         <ConfigState.Provider value={state}>
             <ConfigDispatch.Provider value={dispatch}>
-                {children}
+                {props.children}
             </ConfigDispatch.Provider>
         </ConfigState.Provider>
     );
 };
 
 export const useConfigState = () => {
-    const context = useContext(ConfigState);
+    const context = React.useContext(ConfigState);
 
     if (!context) {
         throw new Error("useConfigState must be used within a state provider!");
@@ -109,7 +102,7 @@ export const useConfigState = () => {
 };
 
 export const useConfigDispatch = () => {
-    const context = useContext(ConfigDispatch);
+    const context = React.useContext(ConfigDispatch);
 
     if (!context) {
         throw new Error("useConfigDispatch must be used within a state provider!");

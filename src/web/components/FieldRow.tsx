@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import * as React from "react";
 import { Col, Card, Button } from "react-bootstrap";
 import { CardCell } from "../domain/CardForm";
 import { Metadata } from "../domain/Metadata";

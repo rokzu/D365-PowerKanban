@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import * as React from "react";
 import { Navbar, Nav, Button, Card, Col, Row, DropdownButton, Dropdown, FormControl, Badge, InputGroup, Spinner } from "react-bootstrap";
-import WebApiClient from "xrm-webapi-client";
+import * as WebApiClient from "xrm-webapi-client";
 import { BoardViewConfig } from "../domain/BoardViewConfig";
 import { UserInputModal } from "./UserInputModalProps";
 import { useAppContext } from "../domain/AppState";
@@ -40,7 +40,7 @@ const determineAttributeUrl = (attribute: Attribute) => {
 };
 
 const fetchSeparatorMetadata = async (entity: string, swimLaneSource: string, metadata: Metadata) => {
-  const field = metadata.Attributes.find(a => a.LogicalName.toLowerCase() === swimLaneSource.toLowerCase());
+  const field = metadata.Attributes.find(a => a.LogicalName.toLowerCase() === swimLaneSource.toLowerCase())!;
   const typeUrl = determineAttributeUrl(field);
 
   const response: Attribute = await WebApiClient.Retrieve({entityName: "EntityDefinition", queryParams: `(LogicalName='${entity}')/Attributes(LogicalName='${field.LogicalName}')/${typeUrl}?$expand=OptionSet`});
@@ -67,17 +67,17 @@ export const Board = () => {
   const [ configState, configDispatch ] = useConfigContext();
   const [ measurerState, measurerDispatch ] = useMeasurerContext();
 
-  const advancedList = useRef<List>(undefined);
+  const advancedList = React.useRef<List>(null);
 
-  const [ views, setViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
-  const [ secondaryViews, setSecondaryViews ]: [ Array<SavedQuery>, (views: Array<SavedQuery>) => void ] = useState([]);
-  const [ cardForms, setCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
-  const [ secondaryCardForms, setSecondaryCardForms ]: [Array<CardForm>, (forms: Array<CardForm>) => void ] = useState([]);
-  const [ showDeletionVerification, setShowDeletionVerification ] = useState(false);
-  const [ stateFilters, setStateFilters ]: [Array<Option>, (options: Array<Option>) => void] = useState([]);
-  const [ displayState, setDisplayState ]: [DisplayState, (state: DisplayState) => void] = useState("simple" as any);
-  const [ searchText, setSearch] = useState("");
-  const [ appliedSearchText, setAppliedSearch ] = useState(undefined);
+  const [ views, setViews ] = React.useState<Array<SavedQuery>>([]);
+  const [ secondaryViews, setSecondaryViews ] = React.useState<Array<SavedQuery>>([]);
+  const [ cardForms, setCardForms ] = React.useState<Array<CardForm>>([]);
+  const [ secondaryCardForms, setSecondaryCardForms ] = React.useState<Array<CardForm>>([]);
+  const [ showDeletionVerification, setShowDeletionVerification ] = React.useState(false);
+  const [ stateFilters, setStateFilters ] = React.useState<Array<Option>>([]);
+  const [ displayState, setDisplayState ] = React.useState<DisplayState>("simple" as any);
+  const [ searchText, setSearch] = React.useState("");
+  const [ appliedSearchText, setAppliedSearch ] = React.useState(undefined);
 
   const getConfigId = async () => {
     if (configState.configId) {
@@ -209,7 +209,8 @@ export const Board = () => {
         const secondaryData = await fetchData(config.secondaryEntity.logicalName,
           defaultSecondaryView.fetchxml,
           config.secondaryEntity.swimLaneSource,
-          defaultSecondaryForm, secondaryMetadata,
+          defaultSecondaryForm,
+          secondaryMetadata,
           secondaryAttributeMetadata,
           {
             additionalFields: [ config.secondaryEntity.parentLookup ],
@@ -231,9 +232,9 @@ export const Board = () => {
     }
   };
 
-  useEffect(() => void advancedList && advancedList.current && advancedList.current.recomputeRowHeights(), [ measurerState.measurementCaches["advanced"] ]);
+  React.useEffect(() => void advancedList && advancedList.current && advancedList.current.recomputeRowHeights(), [ measurerState.measurementCaches["advanced"] ]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     initializeConfig();
   }, [ configState.configId ]);
 
@@ -402,7 +403,7 @@ export const Board = () => {
       <UserInputModal title="Verify Deletion" yesCallBack={deleteRecord} finally={hideDeletionVerification} show={showDeletionVerification}>
         <div>Are you sure you want to delete  '{actionState.selectedRecord && actionState.selectedRecord.name}' (ID: {actionState.selectedRecord && actionState.selectedRecord.id})?</div>
       </UserInputModal>
-      <Navbar bg="light" variant="light" fixed="top">
+      <Navbar bg="light" variant="light">
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
           <Nav className="pull-left">
             <Button title="Config Selector" onClick={openConfigSelector} variant="outline-primary"><span><i className="fa fa-th" aria-hidden="true"></i></span></Button>

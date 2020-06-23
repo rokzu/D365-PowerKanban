@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import * as React from "react";
 import { CellMeasurerCache } from "react-virtualized";
 
 type Action = { type: "resetMeasurementCache" }
@@ -61,7 +61,7 @@ export function MeasurerStateProvider({ children }: MeasurerContextProps) {
 }
 
 export function useMeasurerState() {
-    const context = useContext(MeasurerState);
+    const context = React.useContext(MeasurerState);
 
     if (!context) {
         throw new Error("useMeasurerState must be used within a state provider!");
@@ -71,7 +71,7 @@ export function useMeasurerState() {
 }
 
 export function useMeasurerDispatch() {
-    const context = useContext(MeasurerDispatch);
+    const context = React.useContext(MeasurerDispatch);
 
     if (!context) {
         throw new Error("useAppDispatch must be used within a state provider!");

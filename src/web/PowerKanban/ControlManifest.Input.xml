@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest>
+  <control namespace="oss" constructor="PowerKanban" version="1.0.103" display-name-key="PowerKanban" description-key="Advanced Kanban for D365 datasets" control-type="standard">
+    <!-- dataset node represents a set of entity records on CDS; allow more than one datasets -->
+    <data-set name="entityDataSet" display-name-key="Dataset_Display_Key" cds-data-set-options="displayCommandBar:false;displayViewSelector:false;displayQuickFind:false">
+    </data-set>
+    <property name="configId" display-name-key="configId" description-key="ID of the JSON webresource that contains the config" of-type="SingleLine.Text" usage="input" required="true" />
+    <resources>
+      <code path="index.ts" order="1"/>
+      <css path="../css/bootstrap.min.css" order="1" />
+    </resources>
+    <feature-usage>
+      <uses-feature name="WebAPI" required="true" />
+      <uses-feature name="Utility" required="true" />
+    </feature-usage>
+    <!--   
+    <feature-usage>
+      <uses-feature name="Device.captureAudio" required="true" />
+      <uses-feature name="Device.captureImage" required="true" />
+      <uses-feature name="Device.captureVideo" required="true" />
+      <uses-feature name="Device.getBarcodeValue" required="true" />
+      <uses-feature name="Device.getCurrentPosition" required="true" />
+      <uses-feature name="Device.pickFile" required="true" />
+      <uses-feature name="Utility" required="true" />
+      <uses-feature name="WebAPI" required="true" />
+    </feature-usage> -->
+  </control>
+</manifest>

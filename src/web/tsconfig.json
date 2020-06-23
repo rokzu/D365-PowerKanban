@@ -1,25 +1,7 @@
 {
+    "extends": "./node_modules/pcf-scripts/tsconfig_base.json",
     "compilerOptions": {
-        "outDir": "./dist/",
-        "sourceMap": true,
-        "noImplicitAny": true,
-        "module": "ES6",
-        "moduleResolution": "node",
-        "allowJs": true,
-        "baseUrl": ".",
-        "target": "es6",
-        "jsx": "react",
-        "allowSyntheticDefaultImports": true,
-        "paths": {
-            "*": [
-                "./node_modules/*",
-                "./src/types/*"
-            ]
-        }
-    },
-    "include": [
-        "./components/**/*",
-        "./typings"
-    ]
+        "typeRoots": ["node_modules/@types"],
+        "strictNullChecks": false
+    }
 }
-

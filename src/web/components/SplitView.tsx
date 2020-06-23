@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { Modal, ProgressBar } from "react-bootstrap";
 import { Board } from "./Board";
 import { SideBySideForm } from "./SideBySideForm";
@@ -29,7 +29,7 @@ export const SplitView = (props: SplitViewProps) => {
         </Modal>
         { actionState.flyOutForm && <ExternalForm /> }
         { actionState.configSelectorDisplayState && <ConfigSelector /> }
-        <div style={{ display: "flex", width: "100%", height: "100%", backgroundColor: "#efefef", paddingTop: "50px" }}>
+        <div style={{ display: "flex", width: "100%", height: "100%", backgroundColor: "#efefef" }}>
             <div style={actionState.selectedRecord ? { minWidth: "600px", resize: "horizontal", overflow: "auto"} : { width: "100%" }}>
                 <Board />
             </div>

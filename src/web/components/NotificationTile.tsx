@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import * as React from "react";
 import { useAppContext, useAppDispatch, AppStateProps, AppStateDispatch } from "../domain/AppState";
 import { Card, Table, Row, Col, DropdownButton, Dropdown, Button, ButtonGroup, Image, Badge } from "react-bootstrap";
 import { FieldRow } from "./FieldRow";
@@ -6,7 +6,7 @@ import { Metadata, Option } from "../domain/Metadata";
 import { CardForm } from "../domain/CardForm";
 
 import { refresh, fetchSubscriptions, fetchNotifications } from "../domain/fetchData";
-import WebApiClient from "xrm-webapi-client";
+import * as WebApiClient from "xrm-webapi-client";
 import { Notification } from "../domain/Notification";
 import { useConfigState } from "../domain/ConfigState";
 import { useActionContext } from "../domain/ActionState";
