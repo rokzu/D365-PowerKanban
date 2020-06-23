@@ -17,7 +17,7 @@ Features so far:
 Todos:
 - Virtualization and Performance Tweaking
 - Plugins for automatically creating notifications for subscribed users are already done, need to change namespace
-- Pay respect to dataset data, we are only using views currently
+- Pay respect to dataset data, we are only using views currently, so the entitylist views work right now, but subgrids need tweaking
 
 # Impressions
 ## Advanced View
