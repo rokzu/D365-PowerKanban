@@ -20,7 +20,10 @@ Todos:
 - Pay respect to dataset data, we are only using views currently, so the entitylist views work right now, but subgrids need tweaking
 
 # Impressions
-## Advanced View
+## Simple View (Primary Entity only)
+![Screenshot_2020-06-23 Accounts My Active Accounts - Microsoft Dynamics 365(3)](https://user-images.githubusercontent.com/4287938/85367979-9cac1a80-b52a-11ea-8f7f-91c3e2a832d8.png)
+
+## Advanced View (Primary Entity and Secondary Entity)
 ![Screenshot_2020-06-23 Accounts My Active Accounts - Microsoft Dynamics 365](https://user-images.githubusercontent.com/4287938/85366990-adf42780-b528-11ea-8848-bc035b21ae4f.png)
 
 ## Custom Dialogs
@@ -28,3 +31,8 @@ Todos:
 
 ## Side By Side View
 ![Screenshot_2020-06-23 Accounts My Active Accounts - Microsoft Dynamics 365(2)](https://user-images.githubusercontent.com/4287938/85367151-fdd2ee80-b528-11ea-9765-bd3a80337fcb.png)
+
+# Installation
+- Download and install the managed solution from this repository inside the solutions folder
+- Go into the solution and open the default config. Check the url of the window for the id parameter and copy the guid (This is not user friendly and will soon change)
+- Enable the PCF control for the entity you like and pass the copied guid as configId parameter
