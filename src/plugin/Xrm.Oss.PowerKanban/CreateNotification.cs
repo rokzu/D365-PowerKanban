@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xrm.Oss.FluentQuery;
 
-namespace D365.Kanban.Plugins
+namespace Xrm.Oss.PowerKanban
 {
 
     [DataContract]

@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29609.76
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D365.Kanban.Plugins", "D365.Kanban.Plugins\D365.Kanban.Plugins.csproj", "{8352C0BC-7587-46DA-9F38-EAEE2728E39F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xrm.Oss.PowerKanban", "Xrm.Oss.PowerKanban\Xrm.Oss.PowerKanban.csproj", "{8352C0BC-7587-46DA-9F38-EAEE2728E39F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D365.Kanban.Plugins.Tests", "D365.Kanban.Plugins.Tests\D365.Kanban.Plugins.Tests.csproj", "{A2B00FF9-A588-4388-A86B-D221A34C2132}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xrm.Oss.PowerKanban.Tests", "Xrm.Oss.PowerKanban.Tests\Xrm.Oss.PowerKanban.Tests.csproj", "{A2B00FF9-A588-4388-A86B-D221A34C2132}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

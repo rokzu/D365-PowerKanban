@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{8352C0BC-7587-46DA-9F38-EAEE2728E39F}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>D365.Kanban.Plugins</RootNamespace>
-    <AssemblyName>D365.Kanban.Plugins</AssemblyName>
+    <RootNamespace>Xrm.Oss.PowerKanban</RootNamespace>
+    <AssemblyName>Xrm.Oss.PowerKanban</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

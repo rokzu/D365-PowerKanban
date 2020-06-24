@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace D365.Kanban.Plugins.Tests
+namespace Xrm.Oss.PowerKanban.Tests
 {
     class CreateNotificationTests
     {

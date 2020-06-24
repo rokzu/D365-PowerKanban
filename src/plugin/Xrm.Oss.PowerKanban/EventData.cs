@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace D365.Kanban.Plugins
+namespace Xrm.Oss.PowerKanban
 {
     [DataContract]
     public class EventData
